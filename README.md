@@ -32,6 +32,8 @@ flowchart TD
 ## Recursos Tecnicos
 
 - Execucao automatica programada para 09:00 e 15:00.
+- Filtro de idade de vagas: descarta automaticamente qualquer oportunidade publicada ha mais de 7 dias para evitar candidaturas em processos seletivos antigos.
+- Exibicao de data formatada e indicador de recuo temporal nas mensagens do Telegram.
 - Duas consultas de busca paralelas combinadas por no Merge para garantir volume de dados nas duas categorias.
 - Deduplicacao em memoria para impedir o reenvio de vagas ja notificadas.
 - Roteamento por no Switch para direcionar cada vaga para sua mensagem correspondente.
