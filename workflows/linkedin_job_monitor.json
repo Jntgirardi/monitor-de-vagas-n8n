@@ -6,10 +6,12 @@
         "rule": {
           "interval": [
             {
-              "triggerAtHour": 9
+              "triggerAtHour": 9,
+              "triggerAtMinute": 0
             },
             {
-              "triggerAtHour": 15
+              "triggerAtHour": 15,
+              "triggerAtMinute": 0
             }
           ]
         }
@@ -18,9 +20,9 @@
       "typeVersion": 1.4,
       "position": [
         0,
-        208
+        150
       ],
-      "id": "sched-trigger-main",
+      "id": "sched-trigger",
       "name": "Schedule Trigger"
     },
     {
@@ -31,7 +33,7 @@
           "parameters": [
             {
               "name": "query",
-              "value": "estagio desenvolvedor remoto brasil OR estagio ti feira de santana OR auxiliar administrativo feira de santana"
+              "value": "estagio desenvolvedor brasil"
             },
             {
               "name": "page",
@@ -58,10 +60,63 @@
       "typeVersion": 4.5,
       "position": [
         240,
-        208
+        50
       ],
-      "id": "http-main",
-      "name": "Buscar Vagas"
+      "id": "http-dev",
+      "name": "Buscar Vagas Dev"
+    },
+    {
+      "parameters": {
+        "url": "https://jsearch.p.rapidapi.com/search-v2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "auxiliar administrativo feira de santana"
+            },
+            {
+              "name": "page",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-RapidAPI-Host",
+              "value": "jsearch.p.rapidapi.com"
+            },
+            {
+              "name": "X-RapidAPI-Key",
+              "value": "SUA_CHAVE_RAPIDAPI_AQUI"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        250
+      ],
+      "id": "http-admin",
+      "name": "Buscar Vagas Admin"
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        460,
+        150
+      ],
+      "id": "merge-jobs",
+      "name": "Combinar Resultados"
     },
     {
       "parameters": {
@@ -71,27 +126,28 @@
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
       "position": [
-        464,
-        208
+        680,
+        150
       ],
-      "id": "split-main",
+      "id": "split-jobs",
       "name": "Separar Vagas"
     },
     {
       "parameters": {
-        "jsCode": "// Memória permanente de deduplicação\nconst staticData = $getWorkflowStaticData('global');\nstaticData.seenJobIds = staticData.seenJobIds || [];\n\nconst resultado = [];\n\nfor (const item of $input.all()) {\n  const job = item.json;\n  const id = job.job_id;\n\n  if (!id || staticData.seenJobIds.includes(id)) {\n    continue; // Já enviada antes\n  }\n\n  const title = (job.job_title || '').toLowerCase();\n  const desc = (job.job_description || '').toLowerCase();\n  const city = (job.job_city || '').toLowerCase();\n  const location = (job.job_location || '').toLowerCase();\n\n  const isFeira = /feira\\s*de\\s*santana|fsa/.test(city) ||\n                  /feira\\s*de\\s*santana|fsa/.test(location) ||\n                  /feira\\s*de\\s*santana/.test(desc);\n\n  const isRemote = job.job_is_remote === true || \n                   /remoto|home\\s*office/i.test(title) ||\n                   /100%\\s*remoto|trabalho\\s*remoto/i.test(desc);\n\n  const isAdmin = /administrativ|auxiliar|secretari|escritorio/i.test(title);\n\n  // -------------------------------------------------------------\n  // RAMO 4: AUXILIAR ADMINISTRATIVO (Exclusivo Presencial FSA - CLT, Sem ME/PJ)\n  // -------------------------------------------------------------\n  if (isAdmin) {\n    // Regra: Tem que ser em Feira de Santana\n    if (!isFeira) continue;\n    // Regra: Tem que ser 100% Presencial (não pode ser online/remoto)\n    if (isRemote) continue;\n    // Regra: Sem ME / Sem PJ (Contratação CLT ou Estágio Direto)\n    const isME = /\\b(mei|pj|pessoa\\s*jurídica|pessoa\\s*juridica|microempresa|micro\\s*empreendedor|comissionado|autônomo|autonomo)\\b/i.test(desc) || /\\b(mei|pj)\\b/i.test(title);\n    if (isME) continue;\n\n    job.categoria = 'admin_fsa';\n    staticData.seenJobIds.push(id);\n    resultado.push(item);\n    continue;\n  }\n\n  // -------------------------------------------------------------\n  // RAMO 1: VAGA LOCAL DE TI / DEV EM FEIRA DE SANTANA (VIP)\n  // -------------------------------------------------------------\n  if (isFeira) {\n    job.categoria = 'ti_fsa';\n    staticData.seenJobIds.push(id);\n    resultado.push(item);\n    continue;\n  }\n\n  // -------------------------------------------------------------\n  // VAGAS REMOTAS (Brasil todo)\n  // -------------------------------------------------------------\n  if (isRemote) {\n    const isDev = /desenvolvedor|developer|dev|frontend|front-end|backend|back-end|fullstack|full-stack|software|web|programador|react|node|python|java|javascript/i.test(title) ||\n                  /desenvolvedor|programador/i.test(desc);\n\n    if (isDev) {\n      // RAMO 2: DESENVOLVEDOR REMOTO\n      job.categoria = 'dev_remoto';\n      staticData.seenJobIds.push(id);\n      resultado.push(item);\n    } else {\n      // RAMO 3: OUTRAS ÁREAS DE TI REMOTAS (QA, Dados, Suporte, etc.)\n      job.categoria = 'ti_geral';\n      staticData.seenJobIds.push(id);\n      resultado.push(item);\n    }\n  }\n}\n\nif (staticData.seenJobIds.length > 300) {\n  staticData.seenJobIds = staticData.seenJobIds.slice(-300);\n}\n\nreturn resultado;"
+        "jsCode": "// Memoria de deduplicacao\nconst staticData = $getWorkflowStaticData('global');\nstaticData.seenJobIds = staticData.seenJobIds || [];\n\nconst resultado = [];\n\nfor (const item of $input.all()) {\n  const job = item.json;\n  const id = job.job_id;\n\n  if (!id || staticData.seenJobIds.includes(id)) {\n    continue;\n  }\n\n  const title = (job.job_title || '').toLowerCase();\n  const desc = (job.job_description || '').toLowerCase();\n  const city = (job.job_city || '').toLowerCase();\n  const location = (job.job_location || '').toLowerCase();\n\n  const isFeira = /feira\\s*de\\s*santana|fsa/.test(city) ||\n                  /feira\\s*de\\s*santana|fsa/.test(location) ||\n                  /feira\\s*de\\s*santana/.test(desc);\n\n  const isRemote = job.job_is_remote === true || \n                   /remoto|home\\s*office/i.test(title) ||\n                   /100%\\s*remoto|trabalho\\s*remoto/i.test(desc);\n\n  const isAdmin = /administrativ|auxiliar|secretari|escritorio/i.test(title);\n\n  // 1. Auxiliar Administrativo CLT em Feira de Santana\n  if (isAdmin) {\n    if (!isFeira) continue;\n    if (isRemote) continue;\n    const isME = /\\b(mei|pj|pessoa\\s*jurídica|pessoa\\s*juridica|microempresa|micro\\s*empreendedor|comissionado|autônomo|autonomo)\\b/i.test(desc) || /\\b(mei|pj)\\b/i.test(title);\n    if (isME) continue;\n\n    job.categoria = 'admin_fsa';\n    staticData.seenJobIds.push(id);\n    resultado.push(item);\n    continue;\n  }\n\n  // 2. Vaga Local de TI em Feira de Santana\n  if (isFeira) {\n    job.categoria = 'ti_fsa';\n    staticData.seenJobIds.push(id);\n    resultado.push(item);\n    continue;\n  }\n\n  // 3. Vagas Remotas de Dev ou TI\n  if (isRemote) {\n    const isDev = /desenvolvedor|developer|dev|frontend|backend|fullstack|software|web|programador|react|node|python|java|javascript/i.test(title) ||\n                  /desenvolvedor|programador/i.test(desc);\n\n    if (isDev) {\n      job.categoria = 'dev_remoto';\n    } else {\n      job.categoria = 'ti_geral';\n    }\n    staticData.seenJobIds.push(id);\n    resultado.push(item);\n  }\n}\n\nif (staticData.seenJobIds.length > 300) {\n  staticData.seenJobIds = staticData.seenJobIds.slice(-300);\n}\n\nreturn resultado;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        688,
-        208
+        900,
+        150
       ],
       "id": "code-classifier",
       "name": "Classificador e Deduplicacao"
     },
     {
       "parameters": {
+        "mode": "rules",
         "rules": {
           "values": [
             {
@@ -99,8 +155,7 @@
                 "options": {
                   "caseSensitive": true,
                   "leftValue": "",
-                  "typeValidation": "strict",
-                  "version": 1
+                  "typeValidation": "strict"
                 },
                 "conditions": [
                   {
@@ -122,8 +177,7 @@
                 "options": {
                   "caseSensitive": true,
                   "leftValue": "",
-                  "typeValidation": "strict",
-                  "version": 1
+                  "typeValidation": "strict"
                 },
                 "conditions": [
                   {
@@ -145,8 +199,7 @@
                 "options": {
                   "caseSensitive": true,
                   "leftValue": "",
-                  "typeValidation": "strict",
-                  "version": 1
+                  "typeValidation": "strict"
                 },
                 "conditions": [
                   {
@@ -168,8 +221,7 @@
                 "options": {
                   "caseSensitive": true,
                   "leftValue": "",
-                  "typeValidation": "strict",
-                  "version": 1
+                  "typeValidation": "strict"
                 },
                 "conditions": [
                   {
@@ -187,14 +239,13 @@
               "outputKey": "Auxiliar Admin CLT FSA"
             }
           ]
-        },
-        "options": {}
+        }
       },
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
-        928,
-        208
+        1120,
+        150
       ],
       "id": "switch-node",
       "name": "Switch Classificacao"
@@ -210,12 +261,11 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1264,
-        -176
+        1380,
+        -100
       ],
-      "id": "tg-ti-fsa",
+      "id": "tg-ti",
       "name": "Telegram - TI Feira de Santana",
-      "webhookId": "8ff68870-e9cd-4c45-8f1d-5937b326dc11",
       "credentials": {
         "telegramApi": {
           "id": "",
@@ -235,12 +285,11 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1264,
-        48
+        1380,
+        80
       ],
-      "id": "tg-dev-remoto",
+      "id": "tg-dev",
       "name": "Telegram - Dev Remoto",
-      "webhookId": "3531e82b-51ac-4c2e-bfaa-a3ac909f0874",
       "credentials": {
         "telegramApi": {
           "id": "",
@@ -260,12 +309,11 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1264,
-        256
+        1380,
+        260
       ],
       "id": "tg-ti-geral",
       "name": "Telegram - Outras Areas TI",
-      "webhookId": "5c30e1eb-0554-4006-bbd6-7620c9ff1e47",
       "credentials": {
         "telegramApi": {
           "id": "",
@@ -277,7 +325,7 @@
     {
       "parameters": {
         "chatId": "7289377574",
-        "text": "=🏢 VAGA PRESENCIAL: AUXILIAR ADMINISTRATIVO (CLT)!\n\n📌 Cargo: {{ $json.job_title }}\n🏢 Empresa: {{ $json.employer_name }}\n📍 Local: Feira de Santana - BA (100% Presencial - Sem ME/PJ)\n🔗 Link da Vaga: {{ $json.job_apply_link }}\n\n━━━━━━━━━━━━━━━━━━━━\n📋 PROMPT PRONTO (Toque no bloco para copiar):\n```\nQuero me candidatar a esta vaga de contratação CLT de Auxiliar Administrativo em Feira de Santana. Elabore uma mensagem profissional destacando pontualidade, rotinas de escritório e organização:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos e Atividades:\n{{ ($json.job_description || 'Sem detalhes').replace(/[\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}...\n```",
+        "text": "=VAGA: AUXILIAR ADMINISTRATIVO CLT\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nContratacao: CLT\nLocal: Feira de Santana, Bahia - Presencial\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nAnalise esta vaga CLT de Auxiliar Administrativo em Feira de Santana e estruture uma mensagem profissional de apresentacao:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos:\n{{ ($json.job_description || 'Sem detalhes').replace(/[\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -285,12 +333,11 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1264,
-        464
+        1380,
+        440
       ],
-      "id": "tg-admin-clt",
-      "name": "🏢 Telegram: Admin CLT (FSA)",
-      "webhookId": "94b08635-ad4b-4100-ba50-a3ef881044ac",
+      "id": "tg-admin",
+      "name": "Telegram - Admin CLT Feira de Santana",
       "credentials": {
         "telegramApi": {
           "id": "",
@@ -305,14 +352,41 @@
       "main": [
         [
           {
-            "node": "Buscar Vagas",
+            "node": "Buscar Vagas Dev",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Buscar Vagas Admin",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Buscar Vagas": {
+    "Buscar Vagas Dev": {
+      "main": [
+        [
+          {
+            "node": "Combinar Resultados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Vagas Admin": {
+      "main": [
+        [
+          {
+            "node": "Combinar Resultados",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Combinar Resultados": {
       "main": [
         [
           {

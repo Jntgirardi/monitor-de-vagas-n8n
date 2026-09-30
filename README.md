@@ -6,8 +6,13 @@ Sistema automatizado desenvolvido no n8n para monitoramento e classificacao de v
 
 ```mermaid
 flowchart TD
-    Schedule["Schedule Trigger: 09:00 e 15:00"] --> Fetch["Buscar Vagas: API JSearch"]
-    Fetch --> Split["Separar Vagas: Split Out"]
+    Schedule["Schedule Trigger: 09:00 e 15:00"] --> FetchDev["Buscar Vagas Dev: API JSearch"]
+    Schedule --> FetchAdmin["Buscar Vagas Admin: API JSearch"]
+    
+    FetchDev --> Merge["Combinar Resultados: Merge"]
+    FetchAdmin --> Merge
+    
+    Merge --> Split["Separar Vagas: Split Out"]
     Split --> Classifier["Classificador e Deduplicacao"]
     Classifier --> Switch{"Switch Classificacao"}
     
@@ -27,7 +32,9 @@ flowchart TD
 ## Recursos Tecnicos
 
 - Execucao automatica programada para 09:00 e 15:00.
+- Duas consultas de busca paralelas combinadas por no Merge para garantir volume de dados nas duas categorias.
 - Deduplicacao em memoria para impedir o reenvio de vagas ja notificadas.
+- Roteamento por no Switch para direcionar cada vaga para sua mensagem correspondente.
 - Mensagens estruturadas no Telegram com bloco de codigo para copia direta de prompts.
 - Tolerancia a falhas configurada para execucao continua sem interrupcoes.
 
