@@ -1,4 +1,4 @@
-# 🚀 LinkedIn & Web Job Monitor com n8n
+# 🚀 Monitor de Vagas n8n
 
 Automação inteligente e escalável construída no **n8n** para monitorar oportunidades de **estágio remoto em desenvolvimento de software** em tempo real e enviar alertas instantâneos diretamente no **Telegram**, com caixas de texto com recurso *one-click copy* para análise via IA.
 
@@ -37,8 +37,8 @@ flowchart LR
 
 ### 1. Clonar o repositório
 ```bash
-git clone https://github.com/Jntgirardi/n8n-linkedin-monitor.git
-cd n8n-linkedin-monitor
+git clone https://github.com/Jntgirardi/monitor-de-vagas-n8n.git
+cd monitor-de-vagas-n8n
 ```
 
 ### 2. Subir o n8n
