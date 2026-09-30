@@ -21,7 +21,7 @@
         208
       ],
       "id": "sched-trigger-main",
-      "name": "Schedule Trigger (09h e 15h)"
+      "name": "Schedule Trigger"
     },
     {
       "parameters": {
@@ -61,7 +61,7 @@
         208
       ],
       "id": "http-main",
-      "name": "Buscar Vagas (Dev, TI & Admin)"
+      "name": "Buscar Vagas"
     },
     {
       "parameters": {
@@ -75,7 +75,7 @@
         208
       ],
       "id": "split-main",
-      "name": "Split Out (Desempacota Vagas)"
+      "name": "Separar Vagas"
     },
     {
       "parameters": {
@@ -88,7 +88,7 @@
         208
       ],
       "id": "code-classifier",
-      "name": "🧠 Classificador & Deduplicação"
+      "name": "Classificador e Deduplicacao"
     },
     {
       "parameters": {
@@ -115,7 +115,7 @@
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "TI Feira de Santana (VIP)"
+              "outputKey": "TI Feira de Santana"
             },
             {
               "conditions": {
@@ -161,7 +161,7 @@
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "Outras Áreas TI"
+              "outputKey": "Outras Areas TI"
             },
             {
               "conditions": {
@@ -184,7 +184,7 @@
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "Auxiliar Admin CLT (FSA)"
+              "outputKey": "Auxiliar Admin CLT FSA"
             }
           ]
         },
@@ -197,12 +197,12 @@
         208
       ],
       "id": "switch-node",
-      "name": "🔀 Switch: 4 Ramificações"
+      "name": "Switch Classificacao"
     },
     {
       "parameters": {
         "chatId": "7289377574",
-        "text": "=🚨 VAGA VIP LOCAL: TI EM FEIRA DE SANTANA!\n\n📌 Cargo: {{ $json.job_title }}\n🏢 Empresa: {{ $json.employer_name }}\n📍 Local: Feira de Santana - BA (Oportunidade na sua cidade!)\n🔗 Link da Vaga: {{ $json.job_apply_link }}\n\n━━━━━━━━━━━━━━━━━━━━\n📋 PROMPT PRONTO (Toque no bloco para copiar):\n```\nSurgiu uma vaga local em Feira de Santana na área de TI. Analise a descrição e elabore uma carta de apresentação focando no meu interesse em atuar na região:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos:\n{{ ($json.job_description || 'Sem detalhes').replace(/[\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}...\n```",
+        "text": "=VAGA LOCAL: TI EM FEIRA DE SANTANA\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLocal: Feira de Santana, Bahia\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nAnalise a vaga local de TI em Feira de Santana e elabore minha apresentacao:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos:\n{{ ($json.job_description || 'Sem detalhes').replace(/[\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -214,7 +214,7 @@
         -176
       ],
       "id": "tg-ti-fsa",
-      "name": "🚨 Telegram: TI Feira de Santana",
+      "name": "Telegram - TI Feira de Santana",
       "webhookId": "8ff68870-e9cd-4c45-8f1d-5937b326dc11",
       "credentials": {
         "telegramApi": {
@@ -227,7 +227,7 @@
     {
       "parameters": {
         "chatId": "7289377574",
-        "text": "=💻 NOVA VAGA DE DESENVOLVEDOR (REMOTO)!\n\n📌 Cargo: {{ $json.job_title }}\n🏢 Empresa: {{ $json.employer_name }}\n📍 Modalidade: Remoto / Home Office\n🔗 Link da Vaga: {{ $json.job_apply_link }}\n\n━━━━━━━━━━━━━━━━━━━━\n📋 PROMPT PRONTO (Toque no bloco para copiar):\n```\nAvalie esta vaga de estágio em desenvolvimento e me ajude a preparar minha candidatura técnica com projetos do GitHub:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos e Atividades:\n{{ ($json.job_description || 'Sem detalhes').replace(/[\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}...\n```",
+        "text": "=VAGA: DESENVOLVEDOR REMOTO\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nModalidade: Remoto\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nAvalie esta vaga de estagio em desenvolvimento e elabore minha candidatura tecnica:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos:\n{{ ($json.job_description || 'Sem detalhes').replace(/[\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -239,7 +239,7 @@
         48
       ],
       "id": "tg-dev-remoto",
-      "name": "💻 Telegram: Dev Remoto",
+      "name": "Telegram - Dev Remoto",
       "webhookId": "3531e82b-51ac-4c2e-bfaa-a3ac909f0874",
       "credentials": {
         "telegramApi": {
@@ -252,7 +252,7 @@
     {
       "parameters": {
         "chatId": "7289377574",
-        "text": "=🛠️ NOVA VAGA DE TI (REMOTO)!\n\n📌 Cargo: {{ $json.job_title }}\n🏢 Empresa: {{ $json.employer_name }}\n📍 Modalidade: Remoto / Home Office\n🔗 Link da Vaga: {{ $json.job_apply_link }}\n\n━━━━━━━━━━━━━━━━━━━━\n📋 PROMPT PRONTO (Toque no bloco para copiar):\n```\nAnalise esta vaga de tecnologia e me oriente como destacar minhas habilidades e facilidade de aprendizado:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos:\n{{ ($json.job_description || 'Sem detalhes').replace(/[\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}...\n```",
+        "text": "=VAGA: TI GERAL REMOTO\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nModalidade: Remoto\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nAnalise esta vaga de tecnologia e oriente como estruturar minha candidatura:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos:\n{{ ($json.job_description || 'Sem detalhes').replace(/[\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -264,7 +264,7 @@
         256
       ],
       "id": "tg-ti-geral",
-      "name": "🛠️ Telegram: Outras Áreas TI",
+      "name": "Telegram - Outras Areas TI",
       "webhookId": "5c30e1eb-0554-4006-bbd6-7620c9ff1e47",
       "credentials": {
         "telegramApi": {
@@ -301,76 +301,76 @@
     }
   ],
   "connections": {
-    "Schedule Trigger (09h e 15h)": {
+    "Schedule Trigger": {
       "main": [
         [
           {
-            "node": "Buscar Vagas (Dev, TI & Admin)",
+            "node": "Buscar Vagas",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Buscar Vagas (Dev, TI & Admin)": {
+    "Buscar Vagas": {
       "main": [
         [
           {
-            "node": "Split Out (Desempacota Vagas)",
+            "node": "Separar Vagas",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Split Out (Desempacota Vagas)": {
+    "Separar Vagas": {
       "main": [
         [
           {
-            "node": "🧠 Classificador & Deduplicação",
+            "node": "Classificador e Deduplicacao",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "🧠 Classificador & Deduplicação": {
+    "Classificador e Deduplicacao": {
       "main": [
         [
           {
-            "node": "🔀 Switch: 4 Ramificações",
+            "node": "Switch Classificacao",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "🔀 Switch: 4 Ramificações": {
+    "Switch Classificacao": {
       "main": [
         [
           {
-            "node": "🚨 Telegram: TI Feira de Santana",
+            "node": "Telegram - TI Feira de Santana",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "💻 Telegram: Dev Remoto",
+            "node": "Telegram - Dev Remoto",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "🛠️ Telegram: Outras Áreas TI",
+            "node": "Telegram - Outras Areas TI",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "🏢 Telegram: Admin CLT (FSA)",
+            "node": "Telegram - Admin CLT Feira de Santana",
             "type": "main",
             "index": 0
           }
