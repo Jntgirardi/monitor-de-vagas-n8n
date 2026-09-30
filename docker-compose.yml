@@ -13,6 +13,8 @@ services:
       - WEBHOOK_URL=http://localhost:5678/
       - GENERIC_TIMEZONE=America/Bahia
       - N8N_SECURE_COOKIE=false
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=480
     volumes:
       - n8n_data:/home/node/.n8n
 
