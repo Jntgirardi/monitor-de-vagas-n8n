@@ -77,7 +77,7 @@
     {
       "parameters": {
         "chatId": "7289377574",
-        "text": "=💼 NOVA VAGA DE ESTÁGIO!\n\n📌 Cargo: {{ .job_title }}\n🏢 Empresa: {{ .employer_name }}\n📍 Modalidade: {{ .job_is_remote ? 'Remoto / Home Office' : (.job_city || 'Não informado') }}\n🔗 Link da Vaga: {{ .job_apply_link }}\n\n━━━━━━━━━━━━━━━━━━━━\n📝 SOBRE A VAGA (PRÉVIA):\n{{ (.job_description || 'Sem descrição').replace(/[\\\\*\\_]/g, ' ').slice(0, 350).trim() }}...\n\n━━━━━━━━━━━━━━━━━━━━\n📋 PROMPT PRONTO (Clique no bloco para copiar tudo):\n`\nQuero me candidatar a esta vaga de estágio. Analise os requisitos e me ajude a preparar minha candidatura:\n\nCargo: {{ .job_title }}\nEmpresa: {{ .employer_name }}\nLink: {{ .job_apply_link }}\n\nDescrição:\n{{ (.job_description || 'Sem descrição').replace(/[\\\\*\\_]/g, ' ').slice(0, 1200).trim() }}\n`",
+        "text": "=💼 NOVA VAGA DE ESTÁGIO!\n\n📌 Cargo: {{ .job_title }}\n🏢 Empresa: {{ .employer_name }}\n📍 Modalidade: {{ .job_is_remote ? 'Remoto / Home Office' : (.job_city || 'Não informado') }}\n🔗 Link da Vaga: {{ .job_apply_link }}\n\n━━━━━━━━━━━━━━━━━━━━\n📋 PROMPT PRONTO (Toque no bloco para copiar):\n`\nAvalie esta vaga de estágio e me ajude a preparar minha candidatura:\n\nCargo: {{ .job_title }}\nEmpresa: {{ .employer_name }}\nLink: {{ .job_apply_link }}\n\nRequisitos e Atividades:\n{{ (.job_description || 'Sem detalhes').replace(/[\\\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}...\n`",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
