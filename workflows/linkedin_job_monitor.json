@@ -6,12 +6,10 @@
         "rule": {
           "interval": [
             {
-              "triggerAtHour": 9,
-              "triggerAtMinute": 0
+              "triggerAtHour": 9
             },
             {
-              "triggerAtHour": 15,
-              "triggerAtMinute": 0
+              "triggerAtHour": 15
             }
           ]
         }
@@ -20,7 +18,7 @@
       "typeVersion": 1.4,
       "position": [
         0,
-        200
+        208
       ],
       "id": "sched-trigger-main",
       "name": "Schedule Trigger (09h e 15h)"
@@ -60,7 +58,7 @@
       "typeVersion": 4.5,
       "position": [
         240,
-        200
+        208
       ],
       "id": "http-main",
       "name": "Buscar Vagas (Dev, TI & Admin)"
@@ -73,8 +71,8 @@
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
       "position": [
-        460,
-        200
+        464,
+        208
       ],
       "id": "split-main",
       "name": "Split Out (Desempacota Vagas)"
@@ -86,15 +84,14 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        680,
-        200
+        688,
+        208
       ],
       "id": "code-classifier",
       "name": "🧠 Classificador & Deduplicação"
     },
     {
       "parameters": {
-        "mode": "rules",
         "rules": {
           "values": [
             {
@@ -102,7 +99,8 @@
                 "options": {
                   "caseSensitive": true,
                   "leftValue": "",
-                  "typeValidation": "strict"
+                  "typeValidation": "strict",
+                  "version": 1
                 },
                 "conditions": [
                   {
@@ -124,7 +122,8 @@
                 "options": {
                   "caseSensitive": true,
                   "leftValue": "",
-                  "typeValidation": "strict"
+                  "typeValidation": "strict",
+                  "version": 1
                 },
                 "conditions": [
                   {
@@ -146,7 +145,8 @@
                 "options": {
                   "caseSensitive": true,
                   "leftValue": "",
-                  "typeValidation": "strict"
+                  "typeValidation": "strict",
+                  "version": 1
                 },
                 "conditions": [
                   {
@@ -168,7 +168,8 @@
                 "options": {
                   "caseSensitive": true,
                   "leftValue": "",
-                  "typeValidation": "strict"
+                  "typeValidation": "strict",
+                  "version": 1
                 },
                 "conditions": [
                   {
@@ -186,13 +187,14 @@
               "outputKey": "Auxiliar Admin CLT (FSA)"
             }
           ]
-        }
+        },
+        "options": {}
       },
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
-        920,
-        200
+        928,
+        208
       ],
       "id": "switch-node",
       "name": "🔀 Switch: 4 Ramificações"
@@ -208,11 +210,12 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1200,
-        -100
+        1264,
+        -176
       ],
       "id": "tg-ti-fsa",
       "name": "🚨 Telegram: TI Feira de Santana",
+      "webhookId": "8ff68870-e9cd-4c45-8f1d-5937b326dc11",
       "credentials": {
         "telegramApi": {
           "id": "",
@@ -232,11 +235,12 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1200,
-        100
+        1264,
+        48
       ],
       "id": "tg-dev-remoto",
       "name": "💻 Telegram: Dev Remoto",
+      "webhookId": "3531e82b-51ac-4c2e-bfaa-a3ac909f0874",
       "credentials": {
         "telegramApi": {
           "id": "",
@@ -256,11 +260,12 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1200,
-        300
+        1264,
+        256
       ],
       "id": "tg-ti-geral",
       "name": "🛠️ Telegram: Outras Áreas TI",
+      "webhookId": "5c30e1eb-0554-4006-bbd6-7620c9ff1e47",
       "credentials": {
         "telegramApi": {
           "id": "",
@@ -280,11 +285,12 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1200,
-        500
+        1264,
+        464
       ],
       "id": "tg-admin-clt",
       "name": "🏢 Telegram: Admin CLT (FSA)",
+      "webhookId": "94b08635-ad4b-4100-ba50-a3ef881044ac",
       "credentials": {
         "telegramApi": {
           "id": "",
