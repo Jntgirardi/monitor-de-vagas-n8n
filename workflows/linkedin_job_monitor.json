@@ -6,7 +6,12 @@
         "rule": {
           "interval": [
             {
-              "triggerAtHour": 9
+              "triggerAtHour": 9,
+              "triggerAtMinute": 0
+            },
+            {
+              "triggerAtHour": 15,
+              "triggerAtMinute": 0
             }
           ]
         }
@@ -28,7 +33,7 @@
           "parameters": [
             {
               "name": "query",
-              "value": "estagio desenvolvedor remoto brasil"
+              "value": "estagio desenvolvedor remoto brasil OR estagio ti feira de santana"
             },
             {
               "name": "page",
@@ -101,7 +106,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Memória permanente do n8n entre execuções\nconst staticData = $getWorkflowStaticData('global');\nstaticData.seenJobIds = staticData.seenJobIds || [];\n\nconst novasVagas = [];\n\nfor (const item of $input.all()) {\n  const id = item.json.job_id;\n  \n  // Se ainda não vimos essa vaga antes\n  if (id && !staticData.seenJobIds.includes(id)) {\n    staticData.seenJobIds.push(id);\n    novasVagas.push(item);\n  }\n}\n\n// Mantém apenas os últimos 200 IDs para não pesar a memória\nif (staticData.seenJobIds.length > 200) {\n  staticData.seenJobIds = staticData.seenJobIds.slice(-200);\n}\n\nreturn novasVagas;"
+        "jsCode": "// Memória permanente do n8n entre execuções\nconst staticData = $getWorkflowStaticData('global');\nstaticData.seenJobIds = staticData.seenJobIds || [];\n\nconst novasVagas = [];\n\nfor (const item of $input.all()) {\n  const job = item.json;\n  const id = job.job_id;\n  \n  if (!id || staticData.seenJobIds.includes(id)) {\n    continue; // Já enviada antes\n  }\n\n  // Regra de Localização:\n  // 1. É Remota? Aceita (Brasil todo)\n  const isRemote = job.job_is_remote === true || \n                   /remoto|home\\s*office/i.test(job.job_title || '') ||\n                   /100%\\s*remoto|trabalho\\s*remoto/i.test(job.job_description || '');\n\n  // 2. É Presencial? Só aceita se for em Feira de Santana (Bahia)\n  const isFeira = /feira\\s*de\\s*santana|fsa/i.test(job.job_city || '') ||\n                  /feira\\s*de\\s*santana|fsa/i.test(job.job_location || '') ||\n                  /feira\\s*de\\s*santana/i.test(job.job_description || '');\n\n  if (isRemote || isFeira) {\n    staticData.seenJobIds.push(id);\n    novasVagas.push(item);\n  }\n}\n\n// Limita memória aos últimos 200 IDs\nif (staticData.seenJobIds.length > 200) {\n  staticData.seenJobIds = staticData.seenJobIds.slice(-200);\n}\n\nreturn novasVagas;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
