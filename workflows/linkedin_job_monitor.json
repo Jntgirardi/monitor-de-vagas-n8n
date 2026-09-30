@@ -62,7 +62,7 @@
     },
     {
       "parameters": {
-        "fieldToSplitOut": "data",
+        "fieldToSplitOut": "data.jobs",
         "options": {}
       },
       "type": "n8n-nodes-base.splitOut",
@@ -77,7 +77,7 @@
     {
       "parameters": {
         "chatId": "7289377574",
-        "text": "=💼 NOVA VAGA DE ESTÁGIO!\n\n📌 Cargo: {{ $json.job_title }}\n🏢 Empresa: {{ $json.employer_name }}\n📍 Modalidade: {{ $json.job_is_remote ? 'Remoto / Home Office' : ($json.job_city || 'Não informado') }}\n🔗 Link da Vaga: {{ $json.job_apply_link }}\n\n━━━━━━━━━━━━━━━━━━━━\n📝 SOBRE A VAGA:\n{{ $json.job_description.slice(0, 350).trim() }}...\n\n━━━━━━━━━━━━━━━━━━━━\n📋 PROMPT PARA O CHAT (Clique no bloco para copiar):",
+        "text": "=💼 NOVA VAGA DE ESTÁGIO!\n\n📌 Cargo: {{ .job_title }}\n🏢 Empresa: {{ .employer_name }}\n📍 Modalidade: {{ .job_is_remote ? 'Remoto / Home Office' : (.job_city || 'Não informado') }}\n🔗 Link da Vaga: {{ .job_apply_link }}\n\n━━━━━━━━━━━━━━━━━━━━\n📝 SOBRE A VAGA (PRÉVIA):\n{{ .job_description ? .job_description.slice(0, 350).trim() : 'Sem descrição' }}...\n\n━━━━━━━━━━━━━━━━━━━━\n📋 PROMPT PRONTO (Clique no bloco para copiar tudo):\n`\nQuero me candidatar a esta vaga de estágio. Analise os requisitos e me ajude a preparar minha candidatura:\n\nCargo: {{ .job_title }}\nEmpresa: {{ .employer_name }}\nLink: {{ .job_apply_link }}\n\nDescrição:\n{{ .job_description ? .job_description.slice(0, 1200).trim() : 'Sem descrição' }}\n`",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
