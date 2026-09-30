@@ -77,7 +77,7 @@
     {
       "parameters": {
         "chatId": "7289377574",
-        "text": "=💼 NOVA VAGA DE ESTÁGIO!\n\n📌 Cargo: {{ .job_title }}\n🏢 Empresa: {{ .employer_name }}\n📍 Modalidade: {{ .job_is_remote ? 'Remoto / Home Office' : (.job_city || 'Não informado') }}\n🔗 Link da Vaga: {{ .job_apply_link }}\n\n━━━━━━━━━━━━━━━━━━━━\n📋 PROMPT PRONTO (Toque no bloco para copiar):\n`\nAvalie esta vaga de estágio e me ajude a preparar minha candidatura:\n\nCargo: {{ .job_title }}\nEmpresa: {{ .employer_name }}\nLink: {{ .job_apply_link }}\n\nRequisitos e Atividades:\n{{ (.job_description || 'Sem detalhes').replace(/[\\\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}...\n`",
+        "text": "=💼 NOVA VAGA DE ESTÁGIO!\n\n📌 Cargo: {{ .job_title }}\n🏢 Empresa: {{ .employer_name }}\n📍 Modalidade: {{ .job_is_remote ? 'Remoto / Home Office' : (.job_city || 'Não informado') }}\n🔗 Link da Vaga: {{ .job_apply_link }}\n\n━━━━━━━━━━━━━━━━━━━━\n📝 SOBRE A VAGA (PRÉVIA):\n{{ (.job_description || 'Sem descrição').replace(/[\\\\*\\_]/g, ' ').slice(0, 350).trim() }}...\n\n━━━━━━━━━━━━━━━━━━━━\n📋 PROMPT PRONTO (Clique no bloco para copiar tudo):\n`\nQuero me candidatar a esta vaga de estágio. Analise os requisitos e me ajude a preparar minha candidatura:\n\nCargo: {{ .job_title }}\nEmpresa: {{ .employer_name }}\nLink: {{ .job_apply_link }}\n\nDescrição:\n{{ (.job_description || 'Sem descrição').replace(/[\\\\*\\_]/g, ' ').slice(0, 1200).trim() }}\n`",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -85,7 +85,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        672,
+        880,
         0
       ],
       "id": "274eaa61-1769-47c2-9474-278aba6b6ef3",
@@ -98,6 +98,19 @@
         }
       },
       "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Memória permanente do n8n entre execuções\nconst staticData = $getWorkflowStaticData('global');\nstaticData.seenJobIds = staticData.seenJobIds || [];\n\nconst novasVagas = [];\n\nfor (const item of $input.all()) {\n  const id = item.json.job_id;\n  \n  // Se ainda não vimos essa vaga antes\n  if (id && !staticData.seenJobIds.includes(id)) {\n    staticData.seenJobIds.push(id);\n    novasVagas.push(item);\n  }\n}\n\n// Mantém apenas os últimos 200 IDs para não pesar a memória\nif (staticData.seenJobIds.length > 200) {\n  staticData.seenJobIds = staticData.seenJobIds.slice(-200);\n}\n\nreturn novasVagas;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "f301e68a-b38c-4e51-a0b2-70b58fae4d06",
+      "name": "Code in JavaScript"
     }
   ],
   "connections": {
@@ -124,6 +137,17 @@
       ]
     },
     "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
       "main": [
         [
           {
