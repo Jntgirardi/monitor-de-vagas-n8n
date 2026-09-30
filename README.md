@@ -1,28 +1,30 @@
-# 🚀 Monitor de Vagas n8n (Dual-Pipeline)
+# 🚀 Monitor de Vagas n8n (Roteamento Inteligente com Switch)
 
-Automação inteligente e escalável construída no **n8n** com **arquitetura de esteira dupla (Dual-Pipeline)** para monitorar simultaneamente duas trilhas de carreira:
-1. 💻 **Trilha TI & Desenvolvimento:** Estágios remotos em todo o Brasil ou locais em Feira de Santana - BA.
-2. 🏢 **Trilha Administrativa Local:** Vagas presenciais exclusivas de **Auxiliar Administrativo em Feira de Santana - BA** (com filtro de descarte para vagas online/home office e sem contratação PJ/MEI).
+Automação inteligente e escalável construída no **n8n** com **nó Switch e 4 ramificações especializadas** para monitorar oportunidades de emprego em tempo real, aplicando regras contratuais, geográficas e de carreira personalizadas:
+
+1. 🚨 **Ramo 1 (VIP Local FSA):** Oportunidades presenciais ou híbridas de TI e tecnologia localizadas em **Feira de Santana - BA**.
+2. 💻 **Ramo 2 (Dev Remoto):** Vagas de estágio em desenvolvimento de software (Frontend, Backend, Fullstack, Web) 100% remotas no Brasil todo.
+3. 🛠️ **Ramo 3 (Outras Áreas TI):** Vagas remotas em áreas de suporte, testes/QA, infraestrutura e dados.
+4. 🏢 **Ramo 4 (Auxiliar Administrativo CLT):** Vagas presenciais exclusivas de **Auxiliar Administrativo em Feira de Santana - BA** (100% presencial, contratação direta CLT/estágio, com exclusão de vagas MEI/PJ).
 
 ---
 
-## 📌 Arquitetura do Fluxo (Dual-Pipeline)
+## 📌 Arquitetura do Fluxo
 
 ```mermaid
 flowchart TD
-    Schedule["⏰ Schedule Trigger<br>(Diário às 09:00 e 15:00)"]
-
-    %% TRILHA DEV
-    Schedule --> HTTP_Dev["🌐 Busca Dev & TI<br>(Remoto Brasil / FSA)"]
-    HTTP_Dev --> Split_Dev["🔀 Split Out (Dev)"]
-    Split_Dev --> Code_Dev["🧠 Filtro Dev + Deduplicação"]
-    Code_Dev --> TG_Dev["📱 Telegram Dev<br>(Prompt de Código para IA)"]
-
-    %% TRILHA ADMIN
-    Schedule --> HTTP_Admin["🌐 Busca Auxiliar Admin<br>(Feira de Santana)"]
-    HTTP_Admin --> Split_Admin["🔀 Split Out (Admin)"]
-    Split_Admin --> Code_Admin["🏢 Filtro Admin FSA:<br>100% Presencial + Sem ME/PJ"]
-    Code_Admin --> TG_Admin["📱 Telegram Admin<br>(Prompt de Apresentação)"]
+    Schedule["⏰ Schedule Trigger<br>(Diário às 09:00 e 15:00)"] --> Fetch["🌐 HTTP Request<br>(Busca Unificada: Dev Remoto + TI FSA + Admin FSA)"]
+    Fetch --> Split["🔀 Split Out<br>(Desempacota lista de vagas)"]
+    Split --> Classifier["🧠 Classificador & Deduplicação<br>(Memória Persistente + Filtros de Negócio)"]
+    
+    %% NÓ SWITCH COM 4 RAMOS
+    Classifier --> Switch{"🔀 Nó Switch<br>(Roteamento por Categoria)"}
+    
+    %% OS 4 RAMOS
+    Switch -->|1. TI Feira de Santana| TG1["🚨 Telegram VIP<br>(Alerta Local Feira de Santana)"]
+    Switch -->|2. Desenvolvedor Remoto| TG2["💻 Telegram Dev<br>(Prompt Técnico com GitHub para IA)"]
+    Switch -->|3. Outras Áreas TI| TG3["🛠️ Telegram TI Geral<br>(Prompt de Carreira Tech para IA)"]
+    Switch -->|4. Auxiliar Admin CLT| TG4["🏢 Telegram Admin CLT (FSA)<br>(Prompt Presencial CLT para IA)"]
 ```
 
 ---
@@ -30,23 +32,20 @@ flowchart TD
 ## ✨ Funcionalidades Principais
 
 - ⏱️ **Monitoramento Bi-diário:** Execução automática duas vezes ao dia (às **09:00** e às **15:00**).
-- 🔀 **Esteira Dupla de Execução (Dual-Pipeline):** Processamento em paralelo de dois nichos profissionais distintos.
-- 💻 **Trilha Tecnologia:**
-  - Vagas de estágio remoto no Brasil inteiro ou presenciais em Feira de Santana.
-  - Alerta formatado com prompt focado em análise técnica para IA.
-- 🏢 **Trilha Administrativa (Regras Rigorosas):**
-  - ✅ **100% Presencial:** Descarte automático de vagas remotas/online/híbridas.
-  - 📍 **Exclusivo Feira de Santana - BA:** Validação geográfica estrita.
-  - 🚫 **Sem ME / Sem PJ:** Filtro que descarta vagas de contratação MEI, Pessoa Jurídica, comissionados ou prestadores autônomos (foco em contratação CLT ou estágio direto).
-- 🛡️ **Deduplicação Inteligente em Memória:** Armazena os IDs notificados separadamente por trilha para evitar mensagens repetidas.
-- 📋 **Prompt Pronto para IA (One-Click Copy):** Bloco de código para copiar os requisitos e prompt com um único toque.
+- 🔀 **Roteamento Inteligente via Switch (4 Saídas):** Cada vaga é analisada e direcionada para a saída e notificação corretas.
+- 🏢 **Regra Rigorosa para Auxiliar Administrativo:**
+  - 📍 **Exclusivo Feira de Santana - BA:** Validação territorial estrita.
+  - 🏢 **100% Presencial:** Descarte automático de anúncios online/remotos/híbridos.
+  - 🚫 **Sem ME / Sem PJ:** Elimina contratações via MEI, PJ ou prestador autônomo (foco total em contratação CLT ou estágio direto).
+- 🛡️ **Deduplicação em Memória:** Armazena os IDs notificados em memória permanente (`staticData`) para impedir alertas repetidos.
+- 📋 **Prompts Customizados por Trilha (One-Click Copy):** Cada uma das 4 categorias possui um prompt adaptado para você copiar com 1 toque e enviar para a IA te orientar na candidatura.
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
 - **[n8n](https://n8n.io/)**: Orquestrador de fluxos e automações low-code
-- **JavaScript (ES6+)**: Lógica customizada de filtros geográficos, contratuais e deduplicação
+- **Switch Node & Code Node (JavaScript)**: Roteamento condicional e filtragem de regras de negócio
 - **RapidAPI (JSearch API)**: Agregador de dados em tempo real (LinkedIn, Indeed, Glassdoor)
 - **Telegram Bot API**: Notificações push categorizadas com blocos copiáveis
 - **Docker & Docker Compose**: Ambiente de produção reproduzível

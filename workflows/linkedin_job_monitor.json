@@ -20,7 +20,7 @@
       "typeVersion": 1.4,
       "position": [
         0,
-        150
+        200
       ],
       "id": "sched-trigger-main",
       "name": "Schedule Trigger (09h e 15h)"
@@ -33,7 +33,7 @@
           "parameters": [
             {
               "name": "query",
-              "value": "estagio desenvolvedor remoto brasil OR estagio ti feira de santana"
+              "value": "estagio desenvolvedor remoto brasil OR estagio ti feira de santana OR auxiliar administrativo feira de santana"
             },
             {
               "name": "page",
@@ -59,11 +59,11 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        260,
-        0
+        240,
+        200
       ],
-      "id": "http-dev-ti",
-      "name": "Buscar Vagas Dev & TI"
+      "id": "http-main",
+      "name": "Buscar Vagas (Dev, TI & Admin)"
     },
     {
       "parameters": {
@@ -73,29 +73,134 @@
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
       "position": [
-        480,
-        0
+        460,
+        200
       ],
-      "id": "split-dev",
-      "name": "Split Out (Dev & TI)"
+      "id": "split-main",
+      "name": "Split Out (Desempacota Vagas)"
     },
     {
       "parameters": {
-        "jsCode": "// Memória permanente para vagas Dev & TI\nconst staticData = $getWorkflowStaticData('global');\nstaticData.seenDevJobIds = staticData.seenDevJobIds || [];\n\nconst novasVagas = [];\n\nfor (const item of $input.all()) {\n  const job = item.json;\n  const id = job.job_id;\n  \n  if (!id || staticData.seenDevJobIds.includes(id)) {\n    continue;\n  }\n\n  // 1. Remoto (Brasil todo)\n  const isRemote = job.job_is_remote === true || \n                   /remoto|home\\s*office/i.test(job.job_title || '') ||\n                   /100%\\s*remoto|trabalho\\s*remoto/i.test(job.job_description || '');\n\n  // 2. Presencial (Apenas Feira de Santana)\n  const isFeira = /feira\\s*de\\s*santana|fsa/i.test(job.job_city || '') ||\n                  /feira\\s*de\\s*santana|fsa/i.test(job.job_location || '') ||\n                  /feira\\s*de\\s*santana/i.test(job.job_description || '');\n\n  if (isRemote || isFeira) {\n    staticData.seenDevJobIds.push(id);\n    novasVagas.push(item);\n  }\n}\n\nif (staticData.seenDevJobIds.length > 200) {\n  staticData.seenDevJobIds = staticData.seenDevJobIds.slice(-200);\n}\n\nreturn novasVagas;"
+        "jsCode": "// Memória permanente de deduplicação\nconst staticData = $getWorkflowStaticData('global');\nstaticData.seenJobIds = staticData.seenJobIds || [];\n\nconst resultado = [];\n\nfor (const item of $input.all()) {\n  const job = item.json;\n  const id = job.job_id;\n\n  if (!id || staticData.seenJobIds.includes(id)) {\n    continue; // Já enviada antes\n  }\n\n  const title = (job.job_title || '').toLowerCase();\n  const desc = (job.job_description || '').toLowerCase();\n  const city = (job.job_city || '').toLowerCase();\n  const location = (job.job_location || '').toLowerCase();\n\n  const isFeira = /feira\\s*de\\s*santana|fsa/.test(city) ||\n                  /feira\\s*de\\s*santana|fsa/.test(location) ||\n                  /feira\\s*de\\s*santana/.test(desc);\n\n  const isRemote = job.job_is_remote === true || \n                   /remoto|home\\s*office/i.test(title) ||\n                   /100%\\s*remoto|trabalho\\s*remoto/i.test(desc);\n\n  const isAdmin = /administrativ|auxiliar|secretari|escritorio/i.test(title);\n\n  // -------------------------------------------------------------\n  // RAMO 4: AUXILIAR ADMINISTRATIVO (Exclusivo Presencial FSA - CLT, Sem ME/PJ)\n  // -------------------------------------------------------------\n  if (isAdmin) {\n    // Regra: Tem que ser em Feira de Santana\n    if (!isFeira) continue;\n    // Regra: Tem que ser 100% Presencial (não pode ser online/remoto)\n    if (isRemote) continue;\n    // Regra: Sem ME / Sem PJ (Contratação CLT ou Estágio Direto)\n    const isME = /\\b(mei|pj|pessoa\\s*jurídica|pessoa\\s*juridica|microempresa|micro\\s*empreendedor|comissionado|autônomo|autonomo)\\b/i.test(desc) || /\\b(mei|pj)\\b/i.test(title);\n    if (isME) continue;\n\n    job.categoria = 'admin_fsa';\n    staticData.seenJobIds.push(id);\n    resultado.push(item);\n    continue;\n  }\n\n  // -------------------------------------------------------------\n  // RAMO 1: VAGA LOCAL DE TI / DEV EM FEIRA DE SANTANA (VIP)\n  // -------------------------------------------------------------\n  if (isFeira) {\n    job.categoria = 'ti_fsa';\n    staticData.seenJobIds.push(id);\n    resultado.push(item);\n    continue;\n  }\n\n  // -------------------------------------------------------------\n  // VAGAS REMOTAS (Brasil todo)\n  // -------------------------------------------------------------\n  if (isRemote) {\n    const isDev = /desenvolvedor|developer|dev|frontend|front-end|backend|back-end|fullstack|full-stack|software|web|programador|react|node|python|java|javascript/i.test(title) ||\n                  /desenvolvedor|programador/i.test(desc);\n\n    if (isDev) {\n      // RAMO 2: DESENVOLVEDOR REMOTO\n      job.categoria = 'dev_remoto';\n      staticData.seenJobIds.push(id);\n      resultado.push(item);\n    } else {\n      // RAMO 3: OUTRAS ÁREAS DE TI REMOTAS (QA, Dados, Suporte, etc.)\n      job.categoria = 'ti_geral';\n      staticData.seenJobIds.push(id);\n      resultado.push(item);\n    }\n  }\n}\n\nif (staticData.seenJobIds.length > 300) {\n  staticData.seenJobIds = staticData.seenJobIds.slice(-300);\n}\n\nreturn resultado;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        700,
-        0
+        680,
+        200
       ],
-      "id": "code-dev-filter",
-      "name": "Filtro Dev & TI (Remoto/FSA)"
+      "id": "code-classifier",
+      "name": "🧠 Classificador & Deduplicação"
+    },
+    {
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.categoria }}",
+                    "rightValue": "ti_fsa",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "TI Feira de Santana (VIP)"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.categoria }}",
+                    "rightValue": "dev_remoto",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Desenvolvedor Remoto"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.categoria }}",
+                    "rightValue": "ti_geral",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Outras Áreas TI"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.categoria }}",
+                    "rightValue": "admin_fsa",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Auxiliar Admin CLT (FSA)"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        920,
+        200
+      ],
+      "id": "switch-node",
+      "name": "🔀 Switch: 4 Ramificações"
     },
     {
       "parameters": {
         "chatId": "7289377574",
-        "text": "=💼 NOVA VAGA DE DEV / TI!\n\n📌 Cargo: {{ $json.job_title }}\n🏢 Empresa: {{ $json.employer_name }}\n📍 Modalidade: {{ $json.job_is_remote ? 'Remoto / Home Office' : ($json.job_city || 'Feira de Santana') }}\n🔗 Link da Vaga: {{ $json.job_apply_link }}\n\n━━━━━━━━━━━━━━━━━━━━\n📋 PROMPT PRONTO (Toque no bloco para copiar):\n```\nAvalie esta vaga de estágio em desenvolvimento e me ajude a preparar minha candidatura:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos e Atividades:\n{{ ($json.job_description || 'Sem detalhes').replace(/[\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}...\n```",
+        "text": "=🚨 VAGA VIP LOCAL: TI EM FEIRA DE SANTANA!\n\n📌 Cargo: {{ $json.job_title }}\n🏢 Empresa: {{ $json.employer_name }}\n📍 Local: Feira de Santana - BA (Oportunidade na sua cidade!)\n🔗 Link da Vaga: {{ $json.job_apply_link }}\n\n━━━━━━━━━━━━━━━━━━━━\n📋 PROMPT PRONTO (Toque no bloco para copiar):\n```\nSurgiu uma vaga local em Feira de Santana na área de TI. Analise a descrição e elabore uma carta de apresentação focando no meu interesse em atuar na região:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos:\n{{ ($json.job_description || 'Sem detalhes').replace(/[\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}...\n```",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -103,11 +208,11 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        920,
-        0
+        1200,
+        -100
       ],
-      "id": "tg-dev",
-      "name": "Telegram: Alertas Dev & TI",
+      "id": "tg-ti-fsa",
+      "name": "🚨 Telegram: TI Feira de Santana",
       "credentials": {
         "telegramApi": {
           "id": "",
@@ -118,75 +223,8 @@
     },
     {
       "parameters": {
-        "url": "https://jsearch.p.rapidapi.com/search-v2",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "query",
-              "value": "auxiliar administrativo feira de santana"
-            },
-            {
-              "name": "page",
-              "value": "1"
-            }
-          ]
-        },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-RapidAPI-Host",
-              "value": "jsearch.p.rapidapi.com"
-            },
-            {
-              "name": "X-RapidAPI-Key",
-              "value": "SUA_CHAVE_RAPIDAPI_AQUI"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.5,
-      "position": [
-        260,
-        300
-      ],
-      "id": "http-admin-fsa",
-      "name": "Buscar Auxiliar Admin FSA"
-    },
-    {
-      "parameters": {
-        "fieldToSplitOut": "data.jobs",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.splitOut",
-      "typeVersion": 1,
-      "position": [
-        480,
-        300
-      ],
-      "id": "split-admin",
-      "name": "Split Out (Admin)"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Memória permanente para vagas Administrativas FSA\nconst staticData = $getWorkflowStaticData('global');\nstaticData.seenAdminJobIds = staticData.seenAdminJobIds || [];\n\nconst novasVagasAdmin = [];\n\nfor (const item of $input.all()) {\n  const job = item.json;\n  const id = job.job_id;\n\n  if (!id || staticData.seenAdminJobIds.includes(id)) {\n    continue;\n  }\n\n  const title = (job.job_title || '').toLowerCase();\n  const desc = (job.job_description || '').toLowerCase();\n  const city = (job.job_city || '').toLowerCase();\n  const location = (job.job_location || '').toLowerCase();\n\n  // 1. REGRA: EXCLUSIVAMENTE PRESENCIAL (SEM VAGA ONLINE/REMOTA)\n  const isRemote = job.job_is_remote === true || \n                   /remoto|home\\s*office|híbrido|hibrido|teletrabalho/.test(title) ||\n                   /trabalho\\s*remoto|vaga\\s*remota|100%\\s*home\\s*office/.test(desc);\n  if (isRemote) {\n    continue;\n  }\n\n  // 2. REGRA: EXCLUSIVAMENTE EM FEIRA DE SANTANA\n  const isFeira = /feira\\s*de\\s*santana|fsa/.test(city) ||\n                  /feira\\s*de\\s*santana|fsa/.test(location) ||\n                  /feira\\s*de\\s*santana/.test(desc);\n  if (!isFeira) {\n    continue;\n  }\n\n  // 3. REGRA: SEM ME / SEM PJ (Contratação CLT ou Estágio Direto)\n  const isMEorPJ = /\\b(mei|pj|pessoa\\s*jurídica|pessoa\\s*juridica|microempresa|micro\\s*empreendedor|prestador\\s*de\\s*serviço|prestador\\s*de\\s*servico|comissionado|autônomo|autonomo)\\b/.test(desc) ||\n                   /\\b(mei|pj)\\b/.test(title);\n  if (isMEorPJ) {\n    continue;\n  }\n\n  staticData.seenAdminJobIds.push(id);\n  novasVagasAdmin.push(item);\n}\n\nif (staticData.seenAdminJobIds.length > 200) {\n  staticData.seenAdminJobIds = staticData.seenAdminJobIds.slice(-200);\n}\n\nreturn novasVagasAdmin;"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        700,
-        300
-      ],
-      "id": "code-admin-filter",
-      "name": "Filtro Admin (Presencial FSA & Sem ME)"
-    },
-    {
-      "parameters": {
         "chatId": "7289377574",
-        "text": "=🏢 VAGA LOCAL: AUXILIAR ADMINISTRATIVO!\n\n📌 Cargo: {{ $json.job_title }}\n🏢 Empresa: {{ $json.employer_name }}\n📍 Local: Feira de Santana - BA (100% Presencial)\n🔗 Link da Vaga: {{ $json.job_apply_link }}\n\n━━━━━━━━━━━━━━━━━━━━\n📋 PROMPT PRONTO (Toque no bloco para copiar):\n```\nQuero me candidatar a esta vaga de Auxiliar Administrativo em Feira de Santana. Elabore uma mensagem profissional de apresentação destacando minhas habilidades administrativas e organização:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos e Atividades:\n{{ ($json.job_description || 'Sem detalhes').replace(/[\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}...\n```",
+        "text": "=💻 NOVA VAGA DE DESENVOLVEDOR (REMOTO)!\n\n📌 Cargo: {{ $json.job_title }}\n🏢 Empresa: {{ $json.employer_name }}\n📍 Modalidade: Remoto / Home Office\n🔗 Link da Vaga: {{ $json.job_apply_link }}\n\n━━━━━━━━━━━━━━━━━━━━\n📋 PROMPT PRONTO (Toque no bloco para copiar):\n```\nAvalie esta vaga de estágio em desenvolvimento e me ajude a preparar minha candidatura técnica com projetos do GitHub:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos e Atividades:\n{{ ($json.job_description || 'Sem detalhes').replace(/[\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}...\n```",
         "additionalFields": {
           "parse_mode": "Markdown"
         }
@@ -194,11 +232,59 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        920,
+        1200,
+        100
+      ],
+      "id": "tg-dev-remoto",
+      "name": "💻 Telegram: Dev Remoto",
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram account"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "chatId": "7289377574",
+        "text": "=🛠️ NOVA VAGA DE TI (REMOTO)!\n\n📌 Cargo: {{ $json.job_title }}\n🏢 Empresa: {{ $json.employer_name }}\n📍 Modalidade: Remoto / Home Office\n🔗 Link da Vaga: {{ $json.job_apply_link }}\n\n━━━━━━━━━━━━━━━━━━━━\n📋 PROMPT PRONTO (Toque no bloco para copiar):\n```\nAnalise esta vaga de tecnologia e me oriente como destacar minhas habilidades e facilidade de aprendizado:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos:\n{{ ($json.job_description || 'Sem detalhes').replace(/[\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}...\n```",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
         300
       ],
-      "id": "tg-admin",
-      "name": "Telegram: Alertas Admin FSA",
+      "id": "tg-ti-geral",
+      "name": "🛠️ Telegram: Outras Áreas TI",
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram account"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "chatId": "7289377574",
+        "text": "=🏢 VAGA PRESENCIAL: AUXILIAR ADMINISTRATIVO (CLT)!\n\n📌 Cargo: {{ $json.job_title }}\n🏢 Empresa: {{ $json.employer_name }}\n📍 Local: Feira de Santana - BA (100% Presencial - Sem ME/PJ)\n🔗 Link da Vaga: {{ $json.job_apply_link }}\n\n━━━━━━━━━━━━━━━━━━━━\n📋 PROMPT PRONTO (Toque no bloco para copiar):\n```\nQuero me candidatar a esta vaga de contratação CLT de Auxiliar Administrativo em Feira de Santana. Elabore uma mensagem profissional destacando pontualidade, rotinas de escritório e organização:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos e Atividades:\n{{ ($json.job_description || 'Sem detalhes').replace(/[\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}...\n```",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        500
+      ],
+      "id": "tg-admin-clt",
+      "name": "🏢 Telegram: Admin CLT (FSA)",
       "credentials": {
         "telegramApi": {
           "id": "",
@@ -213,78 +299,72 @@
       "main": [
         [
           {
-            "node": "Buscar Vagas Dev & TI",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Buscar Auxiliar Admin FSA",
+            "node": "Buscar Vagas (Dev, TI & Admin)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Buscar Vagas Dev & TI": {
+    "Buscar Vagas (Dev, TI & Admin)": {
       "main": [
         [
           {
-            "node": "Split Out (Dev & TI)",
+            "node": "Split Out (Desempacota Vagas)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Split Out (Dev & TI)": {
+    "Split Out (Desempacota Vagas)": {
       "main": [
         [
           {
-            "node": "Filtro Dev & TI (Remoto/FSA)",
+            "node": "🧠 Classificador & Deduplicação",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Filtro Dev & TI (Remoto/FSA)": {
+    "🧠 Classificador & Deduplicação": {
       "main": [
         [
           {
-            "node": "Telegram: Alertas Dev & TI",
+            "node": "🔀 Switch: 4 Ramificações",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Buscar Auxiliar Admin FSA": {
+    "🔀 Switch: 4 Ramificações": {
       "main": [
         [
           {
-            "node": "Split Out (Admin)",
+            "node": "🚨 Telegram: TI Feira de Santana",
             "type": "main",
             "index": 0
           }
-        ]
-      ]
-    },
-    "Split Out (Admin)": {
-      "main": [
+        ],
         [
           {
-            "node": "Filtro Admin (Presencial FSA & Sem ME)",
+            "node": "💻 Telegram: Dev Remoto",
             "type": "main",
             "index": 0
           }
-        ]
-      ]
-    },
-    "Filtro Admin (Presencial FSA & Sem ME)": {
-      "main": [
+        ],
         [
           {
-            "node": "Telegram: Alertas Admin FSA",
+            "node": "🛠️ Telegram: Outras Áreas TI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "🏢 Telegram: Admin CLT (FSA)",
             "type": "main",
             "index": 0
           }
