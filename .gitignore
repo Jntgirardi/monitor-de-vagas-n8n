@@ -4,7 +4,12 @@
 
 # n8n local data (if running without named volumes)
 .n8n/
+n8n_data/
 *.log
+
+# SSH Keys and Certs
+*.key
+*.pem
 
 # Operating system files
 .DS_Store
