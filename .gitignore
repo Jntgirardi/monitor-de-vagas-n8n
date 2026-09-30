@@ -1,0 +1,11 @@
+# Environment & secrets
+.env
+*.env.local
+
+# n8n local data (if running without named volumes)
+.n8n/
+*.log
+
+# Operating system files
+.DS_Store
+Thumbs.db

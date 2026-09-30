@@ -1,0 +1,141 @@
+{
+  "name": "Monitor de Vagas",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4c54802c-8fd1-4db0-80e1-f0bd0f89d5fa",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://jsearch.p.rapidapi.com/search-v2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "estagio desenvolvedor remoto brasil"
+            },
+            {
+              "name": "page",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-RapidAPI-Host",
+              "value": "jsearch.p.rapidapi.com"
+            },
+            {
+              "name": "X-RapidAPI-Key",
+              "value": "SUA_CHAVE_RAPIDAPI_AQUI"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "c9e7e246-1324-4360-83c2-3610b1d25457",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "0d313135-af83-463d-8a77-6e813594677e",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "chatId": "7289377574",
+        "text": "=💼 NOVA VAGA DE ESTÁGIO!\n\n📌 Cargo: {{ $json.job_title }}\n🏢 Empresa: {{ $json.employer_name }}\n📍 Modalidade: {{ $json.job_is_remote ? 'Remoto / Home Office' : ($json.job_city || 'Não informado') }}\n🔗 Link da Vaga: {{ $json.job_apply_link }}\n\n━━━━━━━━━━━━━━━━━━━━\n📝 SOBRE A VAGA:\n{{ $json.job_description.slice(0, 350).trim() }}...\n\n━━━━━━━━━━━━━━━━━━━━\n📋 PROMPT PARA O CHAT (Clique no bloco para copiar):",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "274eaa61-1769-47c2-9474-278aba6b6ef3",
+      "name": "Send a text message",
+      "webhookId": "46a9468e-9245-4907-b8b7-3a2e1df2b75e",
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  }
+}
