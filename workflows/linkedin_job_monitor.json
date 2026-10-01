@@ -20,7 +20,7 @@
       "typeVersion": 1.4,
       "position": [
         0,
-        150
+        200
       ],
       "id": "sched-trigger",
       "name": "Schedule Trigger"
@@ -63,7 +63,8 @@
         50
       ],
       "id": "http-dev",
-      "name": "Buscar Vagas Dev"
+      "name": "Buscar Vagas Dev",
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -100,23 +101,45 @@
       "typeVersion": 4.5,
       "position": [
         240,
-        250
+        200
       ],
       "id": "http-admin",
-      "name": "Buscar Vagas Admin"
+      "name": "Buscar Vagas Admin",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/silentflow~linkedin-posts-scraper-ppr/run-sync-get-dataset-items?token=SEU_TOKEN_APIFY_AQUI",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"keywords\": [\n    \"estagio desenvolvedor\",\n    \"auxiliar administrativo feira de santana\"\n  ],\n  \"maxPosts\": 6\n}",
+        "options": {
+          "timeout": 45000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        360
+      ],
+      "id": "http-linkedin-posts",
+      "name": "Buscar Posts LinkedIn",
+      "continueOnFail": true
     },
     {
       "parameters": {
         "mode": "append"
       },
       "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.1,
+      "typeVersion": 3.2,
       "position": [
         460,
-        150
+        120
       ],
-      "id": "merge-jobs",
-      "name": "Combinar Resultados"
+      "id": "merge-jsearch",
+      "name": "Combinar Vagas JSearch"
     },
     {
       "parameters": {
@@ -124,119 +147,74 @@
         "options": {}
       },
       "type": "n8n-nodes-base.splitOut",
-      "typeVersion": 1,
+      "typeVersion": 1.1,
       "position": [
-        680,
-        150
+        660,
+        120
       ],
-      "id": "split-jobs",
-      "name": "Separar Vagas"
+      "id": "split-jsearch",
+      "name": "Separar Vagas JSearch"
     },
     {
       "parameters": {
-        "jsCode": "// Memoria de deduplicacao\nconst staticData = $getWorkflowStaticData('global');\nstaticData.seenJobIds = staticData.seenJobIds || [];\n\nconst resultado = [];\n\nfor (const item of $input.all()) {\n  const job = item.json;\n  const id = job.job_id;\n\n  if (!id || staticData.seenJobIds.includes(id)) {\n    continue;\n  }\n\n  // 1. Calculo e Filtro de Idade da Vaga\n  let diasAtras = 0;\n  if (job.job_posted_at_datetime_utc) {\n    const postDate = new Date(job.job_posted_at_datetime_utc);\n    const agora = new Date();\n    diasAtras = Math.floor((agora - postDate) / (1000 * 60 * 60 * 24));\n  }\n\n  // Descarta vagas publicadas ha mais de 7 dias para evitar vagas antigas\n  if (diasAtras > 7) {\n    continue;\n  }\n\n  // Formatacao da data para exibicao\n  if (job.job_posted_at_datetime_utc) {\n    const d = new Date(job.job_posted_at_datetime_utc);\n    const dia = String(d.getUTCDate()).padStart(2, '0');\n    const mes = String(d.getUTCMonth() + 1).padStart(2, '0');\n    const ano = d.getUTCFullYear();\n    job.data_formatada = `${dia}/${mes}/${ano}`;\n  } else {\n    job.data_formatada = 'Recente';\n  }\n\n  if (diasAtras === 0) {\n    job.status_data = 'Publicada hoje';\n  } else if (diasAtras === 1) {\n    job.status_data = 'Publicada ontem';\n  } else {\n    job.status_data = `Publicada ha ${diasAtras} dias`;\n  }\n\n  const title = (job.job_title || '').toLowerCase();\n  const desc = (job.job_description || '').toLowerCase();\n  const city = (job.job_city || '').toLowerCase();\n  const location = (job.job_location || '').toLowerCase();\n\n  const isFeira = /feira\\s*de\\s*santana|fsa/.test(city) ||\n                  /feira\\s*de\\s*santana|fsa/.test(location) ||\n                  /feira\\s*de\\s*santana/.test(desc);\n\n  const isRemote = job.job_is_remote === true || \n                   /remoto|home\\s*office/i.test(title) ||\n                   /100%\\s*remoto|trabalho\\s*remoto/i.test(desc);\n\n  const isAdmin = /administrativ|auxiliar|secretari|escritorio/i.test(title);\n\n  // Auxiliar Administrativo CLT em Feira de Santana\n  if (isAdmin) {\n    if (!isFeira) continue;\n    if (isRemote) continue;\n    const isME = /\\b(mei|pj|pessoa\\s*jurídica|pessoa\\s*juridica|microempresa|micro\\s*empreendedor|comissionado|autônomo|autonomo)\\b/i.test(desc) || /\\b(mei|pj)\\b/i.test(title);\n    if (isME) continue;\n\n    job.categoria = 'admin_fsa';\n    staticData.seenJobIds.push(id);\n    resultado.push(item);\n    continue;\n  }\n\n  // Vaga Local de TI em Feira de Santana\n  if (isFeira) {\n    job.categoria = 'ti_fsa';\n    staticData.seenJobIds.push(id);\n    resultado.push(item);\n    continue;\n  }\n\n  // Vagas Remotas de Dev ou TI\n  if (isRemote) {\n    const isDev = /desenvolvedor|developer|dev|frontend|backend|fullstack|software|web|programador|react|node|python|java|javascript/i.test(title) ||\n                  /desenvolvedor|programador/i.test(desc);\n\n    if (isDev) {\n      job.categoria = 'dev_remoto';\n    } else {\n      job.categoria = 'ti_geral';\n    }\n    staticData.seenJobIds.push(id);\n    resultado.push(item);\n  }\n}\n\nif (staticData.seenJobIds.length > 300) {\n  staticData.seenJobIds = staticData.seenJobIds.slice(-300);\n}\n\nreturn resultado;"
+        "jsCode": "// Normaliza os posts do feed do LinkedIn para a estrutura padrao de vagas\nconst resultados = [];\n\nfor (const item of $input.all()) {\n  const p = item.json;\n  if (!p || (!p.postId && !p.text)) continue;\n\n  const lines = (p.text || '').split('\\n').map(l => l.replace(/[\\\\`\\*\\_#]/g, ' ').trim()).filter(l => l.length > 0);\n  let titulo = lines[0] || 'Oportunidade no LinkedIn';\n  if (titulo.length > 80) titulo = titulo.slice(0, 77) + '...';\n\n  const author = p.authorName ? p.authorName.replace(/[\\\\`\\*\\_]/g, ' ').trim() : 'Recrutador no LinkedIn';\n\n  resultados.push({\n    json: {\n      job_id: 'li_' + (p.postId || p.url),\n      job_title: titulo,\n      employer_name: author + ' (LinkedIn)',\n      job_apply_link: p.url || '',\n      job_description: p.text || '',\n      job_posted_at_datetime_utc: p.postedAtISO || p.scrapedAt || new Date().toISOString(),\n      job_is_remote: /remoto|home\\s*office|100%\\s*remoto/i.test(p.text || ''),\n      job_city: /feira\\s*de\\s*santana/i.test(p.text || '') ? 'Feira de Santana' : '',\n      job_state: /feira\\s*de\\s*santana/i.test(p.text || '') ? 'BA' : '',\n      job_location: /feira\\s*de\\s*santana/i.test(p.text || '') ? 'Feira de Santana, BA' : 'Brasil',\n      origem: 'Post no LinkedIn'\n    }\n  });\n}\n\nreturn resultados;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        900,
-        150
+        660,
+        360
       ],
-      "id": "code-classifier",
+      "id": "code-normalize-li",
+      "name": "Normalizar Posts LinkedIn"
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        880,
+        220
+      ],
+      "id": "merge-all",
+      "name": "Combinar Todas as Vagas"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Memoria de deduplicacao\nconst staticData = $getWorkflowStaticData('global');\nstaticData.seenJobIds = staticData.seenJobIds || [];\n\nconst resultado = [];\n\nfor (const item of $input.all()) {\n  const job = item.json;\n  const id = job.job_id;\n\n  if (!id || staticData.seenJobIds.includes(id)) {\n    continue;\n  }\n\n  // 1. Calculo e Filtro de Idade da Vaga\n  let diasAtras = 0;\n  if (job.job_posted_at_datetime_utc) {\n    const postDate = new Date(job.job_posted_at_datetime_utc);\n    const agora = new Date();\n    diasAtras = Math.floor((agora - postDate) / (1000 * 60 * 60 * 24));\n  }\n\n  // Descarta vagas publicadas ha mais de 7 dias para evitar vagas antigas\n  if (diasAtras > 7) {\n    continue;\n  }\n\n  // Formatacao da data para exibicao\n  if (job.job_posted_at_datetime_utc) {\n    const d = new Date(job.job_posted_at_datetime_utc);\n    const dia = String(d.getUTCDate()).padStart(2, '0');\n    const mes = String(d.getUTCMonth() + 1).padStart(2, '0');\n    const ano = d.getUTCFullYear();\n    job.data_formatada = `${dia}/${mes}/${ano}`;\n  } else {\n    job.data_formatada = 'Recente';\n  }\n\n  if (diasAtras === 0) {\n    job.status_data = 'Publicada hoje';\n  } else if (diasAtras === 1) {\n    job.status_data = 'Publicada ontem';\n  } else {\n    job.status_data = `Publicada ha ${diasAtras} dias`;\n  }\n\n  const title = (job.job_title || '').toLowerCase();\n  const desc = (job.job_description || '').toLowerCase();\n  const city = (job.job_city || '').toLowerCase();\n  const location = (job.job_location || '').toLowerCase();\n\n  const isFeira = /feira\\s*de\\s*santana|fsa/.test(city) ||\n                  /feira\\s*de\\s*santana|fsa/.test(location) ||\n                  /feira\\s*de\\s*santana/.test(desc);\n\n  const isRemote = job.job_is_remote === true || \n                   /remoto|home\\s*office/i.test(title) ||\n                   /100%\\s*remoto|trabalho\\s*remoto/i.test(desc);\n\n  const isAdmin = /administrativ|auxiliar|secretari|escritorio/i.test(title) ||\n                  (/auxiliar\\s+administrativo/i.test(desc) && isFeira);\n\n  // Auxiliar Administrativo CLT em Feira de Santana\n  if (isAdmin) {\n    if (!isFeira) continue;\n    if (isRemote) continue;\n    const isME = /\\b(mei|pj|pessoa\\s*jurídica|pessoa\\s*juridica|microempresa|micro\\s*empreendedor|comissionado|autônomo|autonomo)\\b/i.test(desc) || /\\b(mei|pj)\\b/i.test(title);\n    if (isME) continue;\n\n    job.categoria = 'admin_fsa';\n    staticData.seenJobIds.push(id);\n    resultado.push(item);\n    continue;\n  }\n\n  // Vaga Local de TI em Feira de Santana\n  if (isFeira) {\n    job.categoria = 'ti_fsa';\n    staticData.seenJobIds.push(id);\n    resultado.push(item);\n    continue;\n  }\n\n  // Vagas Remotas de Dev ou TI\n  if (isRemote) {\n    const isDev = /desenvolvedor|developer|dev|frontend|backend|fullstack|software|web|programador|react|node|python|java|javascript|low\\s*code|c#|angular/i.test(title) ||\n                  /desenvolvedor|programador/i.test(desc);\n\n    if (isDev) {\n      job.categoria = 'dev_remoto';\n    } else {\n      job.categoria = 'ti_geral';\n    }\n    staticData.seenJobIds.push(id);\n    resultado.push(item);\n  }\n}\n\nif (staticData.seenJobIds.length > 300) {\n  staticData.seenJobIds = staticData.seenJobIds.slice(-300);\n}\n\nreturn resultado;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        220
+      ],
+      "id": "classifier-node",
       "name": "Classificador e Deduplicacao"
     },
     {
       "parameters": {
-        "mode": "rules",
+        "dataType": "string",
+        "value1": "={{ $json.categoria }}",
         "rules": {
-          "values": [
+          "rules": [
             {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "strict"
-                },
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.categoria }}",
-                    "rightValue": "ti_fsa",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "TI Feira de Santana"
+              "value2": "ti_fsa",
+              "outputKey": "ti_fsa"
             },
             {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "strict"
-                },
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.categoria }}",
-                    "rightValue": "dev_remoto",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "Desenvolvedor Remoto"
+              "value2": "dev_remoto",
+              "outputKey": "dev_remoto"
             },
             {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "strict"
-                },
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.categoria }}",
-                    "rightValue": "ti_geral",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "Outras Areas TI"
+              "value2": "ti_geral",
+              "outputKey": "ti_geral"
             },
             {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "strict"
-                },
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.categoria }}",
-                    "rightValue": "admin_fsa",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "Auxiliar Admin CLT FSA"
+              "value2": "admin_fsa",
+              "outputKey": "admin_fsa"
             }
           ]
         }
@@ -244,27 +222,28 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
-        1120,
-        150
+        1320,
+        220
       ],
-      "id": "switch-node",
+      "id": "switch-classificacao",
       "name": "Switch Classificacao"
     },
     {
       "parameters": {
         "chatId": "7289377574",
-        "text": "=VAGA LOCAL: TI EM FEIRA DE SANTANA\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nData: {{ $json.data_formatada }} - {{ $json.status_data }}\nLocal: Feira de Santana, Bahia\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nAnalise a vaga local de TI em Feira de Santana e elabore minha apresentacao:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos:\n{{ ($json.job_description || 'Sem detalhes').replace(/[\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
+        "text": "=VAGA: TI - FEIRA DE SANTANA (PRESENCIAL)\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nData: {{ $json.data_formatada }} - {{ $json.status_data }}\nLocal: Feira de Santana - BA\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nElabore uma candidatura personalizada para esta vaga presencial de TI em Feira de Santana - BA:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLocal: Feira de Santana - BA\nLink: {{ $json.job_apply_link }}\n\nRequisitos da vaga:\n{{ ($json.job_description || 'Sem detalhes informados').replace(/[\\\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
         "additionalFields": {
-          "parse_mode": "Markdown"
+          "parse_mode": "Markdown",
+          "disable_web_page_preview": false
         }
       },
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1380,
-        -100
+        1560,
+        50
       ],
-      "id": "tg-ti",
+      "id": "telegram-ti-fsa",
       "name": "Telegram - TI Feira de Santana",
       "credentials": {
         "telegramApi": {
@@ -277,18 +256,19 @@
     {
       "parameters": {
         "chatId": "7289377574",
-        "text": "=VAGA: DESENVOLVEDOR REMOTO\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nData: {{ $json.data_formatada }} - {{ $json.status_data }}\nModalidade: Remoto\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nAvalie esta vaga de estagio em desenvolvimento e elabore minha candidatura tecnica:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos:\n{{ ($json.job_description || 'Sem detalhes').replace(/[\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
+        "text": "=VAGA: DESENVOLVEDOR REMOTO\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nData: {{ $json.data_formatada }} - {{ $json.status_data }}\nModalidade: Remoto\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nAvalie esta vaga de estagio em desenvolvimento e elabore minha candidatura tecnica:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos:\n{{ ($json.job_description || 'Sem detalhes informados').replace(/[\\\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
         "additionalFields": {
-          "parse_mode": "Markdown"
+          "parse_mode": "Markdown",
+          "disable_web_page_preview": false
         }
       },
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1380,
-        80
+        1560,
+        200
       ],
-      "id": "tg-dev",
+      "id": "telegram-dev-remoto",
       "name": "Telegram - Dev Remoto",
       "credentials": {
         "telegramApi": {
@@ -301,18 +281,19 @@
     {
       "parameters": {
         "chatId": "7289377574",
-        "text": "=VAGA: TI GERAL REMOTO\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nData: {{ $json.data_formatada }} - {{ $json.status_data }}\nModalidade: Remoto\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nAnalise esta vaga de tecnologia e oriente como estruturar minha candidatura:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos:\n{{ ($json.job_description || 'Sem detalhes').replace(/[\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
+        "text": "=VAGA: TI - OUTRAS AREAS (REMOTO)\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nData: {{ $json.data_formatada }} - {{ $json.status_data }}\nModalidade: Remoto\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nCrie uma carta de apresentacao para esta oportunidade remota na area de TI:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nDescricao:\n{{ ($json.job_description || 'Sem detalhes informados').replace(/[\\\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
         "additionalFields": {
-          "parse_mode": "Markdown"
+          "parse_mode": "Markdown",
+          "disable_web_page_preview": false
         }
       },
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1380,
-        260
+        1560,
+        350
       ],
-      "id": "tg-ti-geral",
+      "id": "telegram-ti-geral",
       "name": "Telegram - Outras Areas TI",
       "credentials": {
         "telegramApi": {
@@ -325,18 +306,19 @@
     {
       "parameters": {
         "chatId": "7289377574",
-        "text": "=VAGA: AUXILIAR ADMINISTRATIVO CLT\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nData: {{ $json.data_formatada }} - {{ $json.status_data }}\nContratacao: CLT\nLocal: Feira de Santana, Bahia - Presencial\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nAnalise esta vaga CLT de Auxiliar Administrativo em Feira de Santana e estruture uma mensagem profissional de apresentacao:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos:\n{{ ($json.job_description || 'Sem detalhes').replace(/[\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
+        "text": "=VAGA: AUXILIAR ADMINISTRATIVO (PRESENCIAL CLT - FEIRA DE SANTANA)\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nData: {{ $json.data_formatada }} - {{ $json.status_data }}\nLocal: Feira de Santana - BA (100% Presencial)\nRegime: CLT Obrigatorio\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nElabore uma mensagem profissional de candidatura formal CLT para esta vaga administrativa em Feira de Santana - BA:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLocal: Feira de Santana - BA\nLink: {{ $json.job_apply_link }}\n\nDetalhes:\n{{ ($json.job_description || 'Sem detalhes informados').replace(/[\\\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
         "additionalFields": {
-          "parse_mode": "Markdown"
+          "parse_mode": "Markdown",
+          "disable_web_page_preview": false
         }
       },
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1380,
-        440
+        1560,
+        500
       ],
-      "id": "tg-admin",
+      "id": "telegram-admin-fsa",
       "name": "Telegram - Admin CLT Feira de Santana",
       "credentials": {
         "telegramApi": {
@@ -360,6 +342,11 @@
             "node": "Buscar Vagas Admin",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Buscar Posts LinkedIn",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -368,7 +355,7 @@
       "main": [
         [
           {
-            "node": "Combinar Resultados",
+            "node": "Combinar Vagas JSearch",
             "type": "main",
             "index": 0
           }
@@ -379,25 +366,58 @@
       "main": [
         [
           {
-            "node": "Combinar Resultados",
+            "node": "Combinar Vagas JSearch",
             "type": "main",
             "index": 1
           }
         ]
       ]
     },
-    "Combinar Resultados": {
+    "Combinar Vagas JSearch": {
       "main": [
         [
           {
-            "node": "Separar Vagas",
+            "node": "Separar Vagas JSearch",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Separar Vagas": {
+    "Buscar Posts LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Normalizar Posts LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar Vagas JSearch": {
+      "main": [
+        [
+          {
+            "node": "Combinar Todas as Vagas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar Posts LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Combinar Todas as Vagas",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Combinar Todas as Vagas": {
       "main": [
         [
           {
@@ -451,9 +471,5 @@
         ]
       ]
     }
-  },
-  "settings": {
-    "executionOrder": "v1",
-    "binaryMode": "separate"
   }
 }
