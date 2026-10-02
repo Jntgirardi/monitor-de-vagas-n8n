@@ -143,11 +143,10 @@
     },
     {
       "parameters": {
-        "fieldToSplitOut": "data.jobs",
-        "options": {}
+        "jsCode": "// Desempacota a lista data.jobs das buscas da RapidAPI JSearch\nconst vagas = [];\nfor (const item of $input.all()) {\n  const lista = item.json?.data?.jobs || item.json?.jobs || [];\n  for (const vaga of lista) {\n    vagas.push({ json: vaga });\n  }\n}\nreturn vagas;"
       },
-      "type": "n8n-nodes-base.splitOut",
-      "typeVersion": 1.1,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         660,
         120
