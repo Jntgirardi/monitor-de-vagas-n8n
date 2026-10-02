@@ -300,7 +300,7 @@
     },
     {
       "parameters": {
-        "chatId": "7289377574",
+        "chatId": "SEU_CHAT_ID_TELEGRAM",
         "text": "=VAGA: TI - FEIRA DE SANTANA (PRESENCIAL)\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nData: {{ $json.data_formatada }} - {{ $json.status_data }}\nLocal: Feira de Santana - BA\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nElabore uma candidatura personalizada para esta vaga presencial de TI em Feira de Santana - BA:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLocal: Feira de Santana - BA\nLink: {{ $json.job_apply_link }}\n\nRequisitos da vaga:\n{{ ($json.job_description || 'Sem detalhes informados').replace(/[\\\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
         "additionalFields": {
           "parse_mode": "Markdown",
@@ -325,7 +325,7 @@
     },
     {
       "parameters": {
-        "chatId": "7289377574",
+        "chatId": "SEU_CHAT_ID_TELEGRAM",
         "text": "=VAGA: DESENVOLVEDOR REMOTO\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nData: {{ $json.data_formatada }} - {{ $json.status_data }}\nModalidade: Remoto\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nAvalie esta vaga de estagio em desenvolvimento e elabore minha candidatura tecnica:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos:\n{{ ($json.job_description || 'Sem detalhes informados').replace(/[\\\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
         "additionalFields": {
           "parse_mode": "Markdown",
@@ -350,7 +350,7 @@
     },
     {
       "parameters": {
-        "chatId": "7289377574",
+        "chatId": "SEU_CHAT_ID_TELEGRAM",
         "text": "=VAGA: TI - OUTRAS AREAS (REMOTO)\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nData: {{ $json.data_formatada }} - {{ $json.status_data }}\nModalidade: Remoto\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nCrie uma carta de apresentacao para esta oportunidade remota na area de TI:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nDescricao:\n{{ ($json.job_description || 'Sem detalhes informados').replace(/[\\\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
         "additionalFields": {
           "parse_mode": "Markdown",
@@ -375,7 +375,7 @@
     },
     {
       "parameters": {
-        "chatId": "7289377574",
+        "chatId": "SEU_CHAT_ID_TELEGRAM",
         "text": "=VAGA: AUXILIAR ADMINISTRATIVO (PRESENCIAL CLT - FEIRA DE SANTANA)\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nData: {{ $json.data_formatada }} - {{ $json.status_data }}\nLocal: Feira de Santana - BA (100% Presencial)\nRegime: CLT Obrigatorio\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nElabore uma mensagem profissional de candidatura formal CLT para esta vaga administrativa em Feira de Santana - BA:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLocal: Feira de Santana - BA\nLink: {{ $json.job_apply_link }}\n\nDetalhes:\n{{ ($json.job_description || 'Sem detalhes informados').replace(/[\\\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
         "additionalFields": {
           "parse_mode": "Markdown",
