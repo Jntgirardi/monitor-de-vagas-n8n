@@ -36,13 +36,17 @@ flowchart TD
 ## Recursos Tecnicos
 
 - Multiplas fontes: integracao oficial de vagas de emprego (RapidAPI JSearch) combinada com raspagem de posts informais de recrutadores no feed do LinkedIn (Apify).
+- Tag de identificacao de origem: distincao clara entre processos formais (`Tipo: VAGAS`) e publicacoes diretas no feed (`Tipo: POST`).
+- Deduplicacao dupla e semantica: memoria persistente por ID unico (`seenJobIds`) e por impressao digital cruzada (`seenFingerprints`), eliminando republicacoes identicas entre diferentes portais (Gupy, Catho, InfoJobs, LinkedIn).
+- Match Score de compatibilidade: classificacao automatica de aderencia (ALTA, MEDIA, GERAL) analisando a presenca da stack de interesse (Python, JavaScript, TypeScript, React, Node.js, SQL, Docker, Git).
+- Filtro Anti-Falso Junior: deteccao automatica de requisitos abusivos de experiencia (3+ anos, nivel pleno/senior) em oportunidades de estagio ou junior, com emissao de alerta na notificacao.
+- Botoes interativos no Telegram: botoes nativos (Inline Keyboard) para abertura direta da vaga ou do post no LinkedIn com um clique, mantendo a mensagem limpa e ergonomica no celular.
 - Execucao automatica programada para 09:00 e 15:00 BRT.
 - Filtro de idade de vagas: descarta automaticamente qualquer oportunidade publicada ha mais de 7 dias para evitar candidaturas em processos seletivos antigos.
 - Exibicao de data formatada e indicador de recuo temporal nas mensagens do Telegram.
-- Deduplicacao persistente em memoria (`seenJobIds`) para impedir o reenvio de vagas ja notificadas.
 - Roteamento por no Switch para direcionar cada vaga para sua mensagem correspondente.
 - Mensagens estruturadas no Telegram com bloco de codigo para copia direta de prompts voltados a IA.
-- Auto-limpeza (auto-pruning) para manutencao sustentavel no plano gratuito Always Free da Oracle Cloud.
+- Auto-limpeza (auto-pruning) com limite de registros para manutencao sustentavel no plano gratuito Always Free da Oracle Cloud.
 - Tolerancia a falhas configurada para execucao continua sem interrupcoes.
 
 ## Tecnologias
