@@ -1,5 +1,5 @@
 {
-  "name": "Monitor de Vagas Tech - Multi-Fonte com Suporte, Dev e Match Score",
+  "name": "Monitor de Vagas Tech - Multi-Fonte Completo (Dev, Software, Dados, Suporte, TI e FSA)",
   "nodes": [
     {
       "parameters": {
@@ -20,7 +20,7 @@
       "typeVersion": 1.4,
       "position": [
         0,
-        250
+        350
       ],
       "id": "sched-trigger",
       "name": "Schedule Trigger"
@@ -74,6 +74,88 @@
           "parameters": [
             {
               "name": "query",
+              "value": "estagio programacao brasil"
+            },
+            {
+              "name": "page",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-RapidAPI-Host",
+              "value": "jsearch.p.rapidapi.com"
+            },
+            {
+              "name": "X-RapidAPI-Key",
+              "value": "SUA_RAPIDAPI_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        170
+      ],
+      "id": "http-prog",
+      "name": "Buscar Vagas Programacao",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://jsearch.p.rapidapi.com/search-v2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "estagio em dados brasil"
+            },
+            {
+              "name": "page",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-RapidAPI-Host",
+              "value": "jsearch.p.rapidapi.com"
+            },
+            {
+              "name": "X-RapidAPI-Key",
+              "value": "SUA_RAPIDAPI_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        290
+      ],
+      "id": "http-dados",
+      "name": "Buscar Vagas Dados e IA",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://jsearch.p.rapidapi.com/search-v2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
               "value": "estagio suporte brasil"
             },
             {
@@ -101,10 +183,51 @@
       "typeVersion": 4.5,
       "position": [
         240,
-        200
+        410
       ],
       "id": "http-suporte",
       "name": "Buscar Vagas Suporte Remoto",
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://jsearch.p.rapidapi.com/search-v2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "estagio tecnologia da informacao brasil"
+            },
+            {
+              "name": "page",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-RapidAPI-Host",
+              "value": "jsearch.p.rapidapi.com"
+            },
+            {
+              "name": "X-RapidAPI-Key",
+              "value": "SUA_RAPIDAPI_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        530
+      ],
+      "id": "http-ti-br",
+      "name": "Buscar Vagas TI Brasil",
       "continueOnFail": true
     },
     {
@@ -142,7 +265,7 @@
       "typeVersion": 4.5,
       "position": [
         240,
-        350
+        650
       ],
       "id": "http-ti-fsa",
       "name": "Buscar Vagas TI FSA",
@@ -163,7 +286,7 @@
       "typeVersion": 4.5,
       "position": [
         240,
-        500
+        800
       ],
       "id": "http-linkedin-posts",
       "name": "Buscar Posts LinkedIn",
@@ -177,10 +300,36 @@
       "typeVersion": 3.2,
       "position": [
         480,
-        120
+        110
       ],
-      "id": "merge-dev-suporte",
-      "name": "Combinar Dev e Suporte"
+      "id": "merge-1",
+      "name": "Combinar Dev e Programacao"
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        480,
+        350
+      ],
+      "id": "merge-2",
+      "name": "Combinar Dados e Suporte"
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        480,
+        590
+      ],
+      "id": "merge-3",
+      "name": "Combinar TI BR e TI FSA"
     },
     {
       "parameters": {
@@ -190,20 +339,33 @@
       "typeVersion": 3.2,
       "position": [
         680,
-        200
+        230
       ],
-      "id": "merge-jsearch",
-      "name": "Combinar Todas JSearch"
+      "id": "merge-4",
+      "name": "Combinar Subgrupo 1 e 2"
     },
     {
       "parameters": {
-        "jsCode": "// Desempacota a lista data.jobs das buscas da RapidAPI JSearch\nconst vagas = [];\nfor (const item of $input.all()) {\n  const lista = item.json?.data?.jobs || item.json?.jobs || [];\n  for (const vaga of lista) {\n    vaga.tipo_fonte = 'VAGAS';\n    vagas.push({ json: vaga });\n  }\n}\nreturn vagas;"
+        "mode": "append"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        880,
+        350
+      ],
+      "id": "merge-jsearch",
+      "name": "Combinar Todas as Buscas JSearch"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Desempacota a lista data.jobs de todas as 6 buscas JSearch\nconst vagas = [];\nfor (const item of $input.all()) {\n  const lista = item.json?.data?.jobs || item.json?.jobs || [];\n  for (const vaga of lista) {\n    vaga.tipo_fonte = 'VAGAS';\n    vagas.push({ json: vaga });\n  }\n}\nreturn vagas;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        880,
-        200
+        1080,
+        350
       ],
       "id": "split-jsearch",
       "name": "Separar Vagas JSearch"
@@ -215,8 +377,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        680,
-        500
+        880,
+        800
       ],
       "id": "code-normalize-li",
       "name": "Normalizar Posts LinkedIn"
@@ -228,21 +390,21 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        1080,
-        350
+        1280,
+        500
       ],
       "id": "merge-all",
       "name": "Combinar Todas as Vagas"
     },
     {
       "parameters": {
-        "jsCode": "// Memoria de deduplicacao dupla: ID unico e Impressao Digital Semantica\n// Match Score por Tecnologias e Filtro Anti-Falso Junior e Anti-Vagas Fantasmas\nconst staticData = $getWorkflowStaticData('global');\nstaticData.seenJobIds = staticData.seenJobIds || [];\nstaticData.seenFingerprints = staticData.seenFingerprints || [];\n\nfunction normalizar(texto) {\n  if (!texto) return '';\n  return texto\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .replace(/[^a-z0-9]/g, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction gerarFingerprint(job) {\n  const rawTitle = normalizar(job.job_title || '');\n  const rawEmpresa = normalizar(job.employer_name || '');\n\n  const stopWords = /\\b(vaga|vagas|oportunidade|estagio|estagiario|estagiaria|junior|jr|pleno|senior|remoto|home\\s*office|hibrido|presencial|brasil|sao\\s*paulo|sp|feira\\s*de\\s*santana|ba|rj|clt|pj|efetivo)\\b/g;\n  \n  let titleClean = rawTitle\n    .replace(stopWords, '')\n    .replace(/\\b\\d+\\b/g, '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n\n  let empresaClean = rawEmpresa\n    .replace(/\\b(ltda|sa|s\\s*a|inc|corp|brasil|linkedin|divulga\\s*vagas|gupy|catho|infojobs|indeed|confidencial)\\b/g, '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n\n  if (titleClean.length >= 4 && empresaClean.length >= 3) {\n    return 't:' + titleClean + '#e:' + empresaClean;\n  }\n\n  const descClean = normalizar(job.job_description || '').slice(0, 60);\n  return 't:' + titleClean + '#d:' + descClean;\n}\n\nconst resultado = [];\n\nfor (const item of $input.all()) {\n  const job = item.json;\n  const id = job.job_id;\n  const fp = gerarFingerprint(job);\n\n  // 1. Deteccao de duplicadas (ID ou Fingerprint)\n  if ((id && staticData.seenJobIds.includes(id)) || (fp && staticData.seenFingerprints.includes(fp))) {\n    continue;\n  }\n\n  // 2. Calculo e Filtro de Idade da Vaga (max 7 dias)\n  let diasAtras = 0;\n  if (job.job_posted_at_datetime_utc) {\n    const postDate = new Date(job.job_posted_at_datetime_utc);\n    const agora = new Date();\n    diasAtras = Math.floor((agora - postDate) / (1000 * 60 * 60 * 24));\n  }\n\n  if (diasAtras > 7) {\n    continue;\n  }\n\n  if (job.job_posted_at_datetime_utc) {\n    const d = new Date(job.job_posted_at_datetime_utc);\n    const dia = String(d.getUTCDate()).padStart(2, '0');\n    const mes = String(d.getUTCMonth() + 1).padStart(2, '0');\n    const ano = d.getUTCFullYear();\n    job.data_formatada = `${dia}/${mes}/${ano}`;\n  } else {\n    job.data_formatada = 'Recente';\n  }\n\n  if (diasAtras === 0) {\n    job.status_data = 'Publicada hoje';\n  } else if (diasAtras === 1) {\n    job.status_data = 'Publicada ontem';\n  } else {\n    job.status_data = `Publicada ha ${diasAtras} dias`;\n  }\n\n  const title = (job.job_title || '').toLowerCase();\n  const desc = (job.job_description || '').toLowerCase();\n  const rawEmpresa = (job.employer_name || '').trim().toLowerCase();\n  const textoGeral = (title + ' ' + desc).toLowerCase();\n  const city = (job.job_city || '').toLowerCase();\n  const location = (job.job_location || '').toLowerCase();\n\n  // 3. Filtro Rigoroso Anti-Vagas Fantasmas (Ghost Jobs)\n  const isBanco = /\\b(?:banco\\s*de\\s*talentos?|cadastro\\s*(?:de\\s*)?reserva|pool\\s*de\\s*talentos?|futuras?\\s*oportunidades?|oportunidades?\\s*futuras?|deixe\\s*seu\\s*curriculo|curriculo\\s*no\\s*banco|banco\\s*de\\s*curriculos?)\\b/i.test(title) ||\n    /\\b(?:este\\s*e\\s*um\\s*banco\\s*de\\s*talentos|esta\\s*e\\s*uma\\s*vaga\\s*para\\s*banco\\s*de\\s*talentos|para\\s*compor\\s*nosso\\s*banco\\s*de\\s*talentos|cadastre-?se\\s*em\\s*nosso\\s*banco\\s*de\\s*talentos|apenas\\s*para\\s*cadastro\\s*de\\s*reserva)\\b/i.test(desc);\n\n  const isConfidencial = /\\b(?:empresa\\s*confidencial|cliente\\s*confidencial|^confidencial$|^sigiloso$)\\b/i.test(rawEmpresa);\n\n  const isIscaLinkedIn = /\\b(?:comente\\s*[\"']?(?:eu\\s*quero|quero|interesse|interessado)[\"']?|deixe\\s*(?:o\\s*)?seu\\s*e-?mail|digite\\s*[\"']?(?:eu\\s*quero|quero)[\"']?|curta\\s*e\\s*comente|comente\\s*para\\s*receber|envie\\s*uma\\s*mensagem\\s*no\\s*privado\\s*para\\s*receber\\s*o\\s*link|siga\\s*(?:meu|nosso)\\s*perfil\\s*para\\s*receber|mande\\s*conexao\\s*para\\s*receber)\\b/i.test(desc);\n\n  const isCurso = /\\b(?:adquira\\s*o\\s*(?:curso|treinamento)|treinamento\\s*obrigatorio\\s*pago|taxa\\s*de\\s*inscricao|pague\\s*a\\s*taxa|matricula\\s*no\\s*curso|comprar\\s*o\\s*material)\\b/i.test(desc);\n\n  const isDescricaoVazia = (job.job_description || '').trim().length < 80;\n\n  if (isBanco || isConfidencial || isIscaLinkedIn || isCurso || isDescricaoVazia) {\n    continue;\n  }\n\n  // 4. Garantia de Link Valido para o Botao do Telegram\n  if (!job.job_apply_link || typeof job.job_apply_link !== 'string' || !job.job_apply_link.startsWith('http')) {\n    if (job.tipo_fonte === 'POST') {\n      job.job_apply_link = 'https://www.linkedin.com/feed/';\n    } else {\n      job.job_apply_link = 'https://www.google.com/search?q=' + encodeURIComponent((job.job_title || '') + ' ' + (job.employer_name || ''));\n    }\n  }\n\n  // 5. Analise de Match Score Ampliado para toda a Area de TI\n  const stackDefs = [\n    { nome: 'Python', regex: /\\b(python|django|fastapi|flask)\\b/i, principal: true },\n    { nome: 'JavaScript', regex: /\\b(javascript|js|es6)\\b/i, principal: true },\n    { nome: 'TypeScript', regex: /\\b(typescript|ts)\\b/i, principal: true },\n    { nome: 'React', regex: /\\b(react|reactjs|react\\.js|react\\s*native)\\b/i, principal: true },\n    { nome: 'Node.js', regex: /\\b(node|nodejs|node\\.js|express|nest|nestjs)\\b/i, principal: true },\n    { nome: 'SQL/Dados', regex: /\\b(sql|mysql|postgresql|postgres|sqlite|database|banco\\s*de\\s*dados|power\\s*bi|bi|analytics)\\b/i, principal: true },\n    { nome: 'Docker/DevOps', regex: /\\b(docker|containers?|cloud|aws|azure)\\b/i, principal: true },\n    { nome: 'Git', regex: /\\b(git|github|gitlab)\\b/i, principal: true },\n    { nome: 'Linux/Redes', regex: /\\b(linux|ubuntu|redes|tcp\\/ip|dns|hardware|suporte|help\\s*desk)\\b/i, principal: false },\n    { nome: 'API REST', regex: /\\b(rest|restful|apis?)\\b/i, principal: false },\n    { nome: 'Automacao/QA', regex: /\\b(automacao|rpa|selenium|cypress|qa|testes?)\\b/i, principal: false },\n    { nome: 'Seguranca', regex: /\\b(seguranca|cyber|soc|firewall|lgpd)\\b/i, principal: false },\n    { nome: 'HTML/CSS', regex: /\\b(html|css|tailwind|bootstrap)\\b/i, principal: false },\n    { nome: 'Java', regex: /\\b(java|spring|springboot)\\b/i, principal: false },\n    { nome: 'C#/.NET', regex: /\\b(c#|\\.net|dotnet)\\b/i, principal: false },\n    { nome: 'PHP', regex: /\\b(php|laravel)\\b/i, principal: false }\n  ];\n\n  const stacksEncontradas = [];\n  let pontuacaoPrincipal = 0;\n\n  for (const s of stackDefs) {\n    if (s.regex.test(textoGeral)) {\n      stacksEncontradas.push(s.nome);\n      if (s.principal) {\n        pontuacaoPrincipal++;\n      }\n    }\n  }\n\n  let nivelScore = 'GERAL';\n  if (pontuacaoPrincipal >= 3) {\n    nivelScore = 'ALTA';\n  } else if (pontuacaoPrincipal >= 1) {\n    nivelScore = 'MEDIA';\n  }\n\n  const stacksFormatadas = stacksEncontradas.length > 0 ? stacksEncontradas.join(', ') : 'Geral TI';\n  job.match_score = nivelScore;\n  job.compatibilidade_texto = `${nivelScore} (${stacksFormatadas})`;\n\n  // 6. Filtro Anti-Falso Junior (Opcao B: Alerta em destaque)\n  const expAbusivaRegex = /\\b(?:experiencia\\s*(?:comprovada|solida|minima)?\\s*(?:de\\s*)?([3-9]|\\d{2,})\\s*(?:anos?|yrs?|years?)|([3-9]|\\d{2,})\\s*(?:anos?|yrs?|years?)\\s*(?:de\\s*)?(?:experiencia|atuacao|pratica|vivencia)|(?:minimo|ao\\s*menos|a\\s*partir)\\s*de\\s*([3-9]|\\d{2,})\\s*(?:anos?))\\b/i;\n  const nivelPlenoSenior = /\\b(?:nivel\\s*pleno|nivel\\s*senior|experiencia\\s*senior|tech\\s*lead|lideranca\\s*tecnica)\\b/i;\n\n  if (expAbusivaRegex.test(desc) || nivelPlenoSenior.test(desc)) {\n    job.alerta_experiencia = '[ALERTA: Exige experiencia avancada (3+ anos/pleno)]';\n    job.alerta_formatado = '[ALERTA: Exige experiencia avancada (3+ anos/pleno)]\\n';\n  } else {\n    job.alerta_experiencia = '';\n    job.alerta_formatado = '';\n  }\n\n  job.botao_texto = (job.tipo_fonte === 'POST') ? 'Ver Post no LinkedIn' : 'Acessar Vaga';\n\n  // 7. Roteamento Geografico e Categoria Profissional\n  const isFeira = /feira\\s*de\\s*santana|fsa/.test(city) ||\n                  /feira\\s*de\\s*santana|fsa/.test(location) ||\n                  /feira\\s*de\\s*santana/.test(desc);\n\n  const isRemote = job.job_is_remote === true || \n                   /remoto|home\\s*office/i.test(title) ||\n                   /100%\\s*remoto|trabalho\\s*remoto/i.test(desc);\n\n  if (isFeira) {\n    job.categoria = 'ti_fsa';\n    if (id) staticData.seenJobIds.push(id);\n    if (fp) staticData.seenFingerprints.push(fp);\n    resultado.push(item);\n    continue;\n  }\n\n  if (isRemote) {\n    const isDev = /desenvolvedor|developer|dev|frontend|backend|fullstack|software|web|programador|react|node|python|java|javascript|low\\s*code|c#|angular/i.test(title) ||\n                  /desenvolvedor|programador/i.test(desc);\n\n    if (isDev) {\n      job.categoria = 'dev_remoto';\n    } else {\n      job.categoria = 'ti_geral';\n    }\n    if (id) staticData.seenJobIds.push(id);\n    if (fp) staticData.seenFingerprints.push(fp);\n    resultado.push(item);\n  }\n}\n\nif (staticData.seenJobIds.length > 500) {\n  staticData.seenJobIds = staticData.seenJobIds.slice(-500);\n}\nif (staticData.seenFingerprints.length > 500) {\n  staticData.seenFingerprints = staticData.seenFingerprints.slice(-500);\n}\n\nreturn resultado;"
+        "jsCode": "// Memoria de deduplicacao dupla: ID unico e Impressao Digital Semantica\n// Match Score por Tecnologias, Filtro Anti-Falso Junior e Anti-Vagas Fantasmas\nconst staticData = $getWorkflowStaticData('global');\nstaticData.seenJobIds = staticData.seenJobIds || [];\nstaticData.seenFingerprints = staticData.seenFingerprints || [];\n\nfunction normalizar(texto) {\n  if (!texto) return '';\n  return texto\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .replace(/[^a-z0-9]/g, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction gerarFingerprint(job) {\n  const rawTitle = normalizar(job.job_title || '');\n  const rawEmpresa = normalizar(job.employer_name || '');\n\n  const stopWords = /\\b(vaga|vagas|oportunidade|estagio|estagiario|estagiaria|junior|jr|pleno|senior|remoto|home\\s*office|hibrido|presencial|brasil|sao\\s*paulo|sp|feira\\s*de\\s*santana|ba|rj|clt|pj|efetivo)\\b/g;\n  \n  let titleClean = rawTitle\n    .replace(stopWords, '')\n    .replace(/\\b\\d+\\b/g, '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n\n  let empresaClean = rawEmpresa\n    .replace(/\\b(ltda|sa|s\\s*a|inc|corp|brasil|linkedin|divulga\\s*vagas|gupy|catho|infojobs|indeed|confidencial)\\b/g, '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n\n  if (titleClean.length >= 4 && empresaClean.length >= 3) {\n    return 't:' + titleClean + '#e:' + empresaClean;\n  }\n\n  const descClean = normalizar(job.job_description || '').slice(0, 60);\n  return 't:' + titleClean + '#d:' + descClean;\n}\n\nconst resultado = [];\n\nfor (const item of $input.all()) {\n  const job = item.json;\n  const id = job.job_id;\n  const fp = gerarFingerprint(job);\n\n  // 1. Deteccao de duplicadas (ID ou Fingerprint)\n  if ((id && staticData.seenJobIds.includes(id)) || (fp && staticData.seenFingerprints.includes(fp))) {\n    continue;\n  }\n\n  // 2. Calculo e Filtro de Idade da Vaga (max 7 dias)\n  let diasAtras = 0;\n  if (job.job_posted_at_datetime_utc) {\n    const postDate = new Date(job.job_posted_at_datetime_utc);\n    const agora = new Date();\n    diasAtras = Math.floor((agora - postDate) / (1000 * 60 * 60 * 24));\n  }\n\n  if (diasAtras > 7) {\n    continue;\n  }\n\n  if (job.job_posted_at_datetime_utc) {\n    const d = new Date(job.job_posted_at_datetime_utc);\n    const dia = String(d.getUTCDate()).padStart(2, '0');\n    const mes = String(d.getUTCMonth() + 1).padStart(2, '0');\n    const ano = d.getUTCFullYear();\n    job.data_formatada = `${dia}/${mes}/${ano}`;\n  } else {\n    job.data_formatada = 'Recente';\n  }\n\n  if (diasAtras === 0) {\n    job.status_data = 'Publicada hoje';\n  } else if (diasAtras === 1) {\n    job.status_data = 'Publicada ontem';\n  } else {\n    job.status_data = `Publicada ha ${diasAtras} dias`;\n  }\n\n  const title = (job.job_title || '').toLowerCase();\n  const desc = (job.job_description || '').toLowerCase();\n  const rawEmpresa = (job.employer_name || '').trim().toLowerCase();\n  const textoGeral = (title + ' ' + desc).toLowerCase();\n  const city = (job.job_city || '').toLowerCase();\n  const location = (job.job_location || '').toLowerCase();\n\n  // 3. Filtro Rigoroso Anti-Vagas Fantasmas (Ghost Jobs)\n  const isBanco = /\\b(?:banco\\s*de\\s*talentos?|cadastro\\s*(?:de\\s*)?reserva|pool\\s*de\\s*talentos?|futuras?\\s*oportunidades?|oportunidades?\\s*futuras?|deixe\\s*seu\\s*curriculo|curriculo\\s*no\\s*banco|banco\\s*de\\s*curriculos?)\\b/i.test(title) ||\n    /\\b(?:este\\s*e\\s*um\\s*banco\\s*de\\s*talentos|esta\\s*e\\s*uma\\s*vaga\\s*para\\s*banco\\s*de\\s*talentos|para\\s*compor\\s*nosso\\s*banco\\s*de\\s*talentos|cadastre-?se\\s*em\\s*nosso\\s*banco\\s*de\\s*talentos|apenas\\s*para\\s*cadastro\\s*de\\s*reserva)\\b/i.test(desc);\n\n  const isConfidencial = /\\b(?:empresa\\s*confidencial|cliente\\s*confidencial|^confidencial$|^sigiloso$)\\b/i.test(rawEmpresa);\n\n  const isIscaLinkedIn = /\\b(?:comente\\s*[\"']?(?:eu\\s*quero|quero|interesse|interessado)[\"']?|deixe\\s*(?:o\\s*)?seu\\s*e-?mail|digite\\s*[\"']?(?:eu\\s*quero|quero)[\"']?|curta\\s*e\\s*comente|comente\\s*para\\s*receber|envie\\s*uma\\s*mensagem\\s*no\\s*privado\\s*para\\s*receber\\s*o\\s*link|siga\\s*(?:meu|nosso)\\s*perfil\\s*para\\s*receber|mande\\s*conexao\\s*para\\s*receber)\\b/i.test(desc);\n\n  const isCurso = /\\b(?:adquira\\s*o\\s*(?:curso|treinamento)|treinamento\\s*obrigatorio\\s*pago|taxa\\s*de\\s*inscricao|pague\\s*a\\s*taxa|matricula\\s*no\\s*curso|comprar\\s*o\\s*material)\\b/i.test(desc);\n\n  const isDescricaoVazia = (job.job_description || '').trim().length < 80;\n\n  if (isBanco || isConfidencial || isIscaLinkedIn || isCurso || isDescricaoVazia) {\n    continue;\n  }\n\n  // 4. Garantia de Link Valido para o Botao do Telegram\n  if (!job.job_apply_link || typeof job.job_apply_link !== 'string' || !job.job_apply_link.startsWith('http')) {\n    if (job.tipo_fonte === 'POST') {\n      job.job_apply_link = 'https://www.linkedin.com/feed/';\n    } else {\n      job.job_apply_link = 'https://www.google.com/search?q=' + encodeURIComponent((job.job_title || '') + ' ' + (job.employer_name || ''));\n    }\n  }\n\n  // 5. Analise de Match Score Ampliado para toda a Area de TI\n  const stackDefs = [\n    { nome: 'Python', regex: /\\b(python|django|fastapi|flask)\\b/i, principal: true },\n    { nome: 'JavaScript', regex: /\\b(javascript|js|es6)\\b/i, principal: true },\n    { nome: 'TypeScript', regex: /\\b(typescript|ts)\\b/i, principal: true },\n    { nome: 'React', regex: /\\b(react|reactjs|react\\.js|react\\s*native)\\b/i, principal: true },\n    { nome: 'Node.js', regex: /\\b(node|nodejs|node\\.js|express|nest|nestjs)\\b/i, principal: true },\n    { nome: 'SQL/Dados', regex: /\\b(sql|mysql|postgresql|postgres|sqlite|database|banco\\s*de\\s*dados|power\\s*bi|bi|analytics|pandas)\\b/i, principal: true },\n    { nome: 'Docker/DevOps', regex: /\\b(docker|containers?|cloud|aws|azure)\\b/i, principal: true },\n    { nome: 'Git', regex: /\\b(git|github|gitlab)\\b/i, principal: true },\n    { nome: 'Linux/Redes', regex: /\\b(linux|ubuntu|redes|tcp\\/ip|dns|hardware|suporte|help\\s*desk)\\b/i, principal: false },\n    { nome: 'API REST', regex: /\\b(rest|restful|apis?)\\b/i, principal: false },\n    { nome: 'Automacao/QA', regex: /\\b(automacao|rpa|selenium|cypress|qa|testes?)\\b/i, principal: false },\n    { nome: 'Seguranca', regex: /\\b(seguranca|cyber|soc|firewall|lgpd)\\b/i, principal: false },\n    { nome: 'HTML/CSS', regex: /\\b(html|css|tailwind|bootstrap)\\b/i, principal: false },\n    { nome: 'Java', regex: /\\b(java|spring|springboot)\\b/i, principal: false },\n    { nome: 'C#/.NET', regex: /\\b(c#|\\.net|dotnet)\\b/i, principal: false },\n    { nome: 'PHP', regex: /\\b(php|laravel)\\b/i, principal: false }\n  ];\n\n  const stacksEncontradas = [];\n  let pontuacaoPrincipal = 0;\n\n  for (const s of stackDefs) {\n    if (s.regex.test(textoGeral)) {\n      stacksEncontradas.push(s.nome);\n      if (s.principal) {\n        pontuacaoPrincipal++;\n      }\n    }\n  }\n\n  let nivelScore = 'GERAL';\n  if (pontuacaoPrincipal >= 3) {\n    nivelScore = 'ALTA';\n  } else if (pontuacaoPrincipal >= 1) {\n    nivelScore = 'MEDIA';\n  }\n\n  const stacksFormatadas = stacksEncontradas.length > 0 ? stacksEncontradas.join(', ') : 'Geral TI';\n  job.match_score = nivelScore;\n  job.compatibilidade_texto = `${nivelScore} (${stacksFormatadas})`;\n\n  // 6. Filtro Anti-Falso Junior (Opcao B: Alerta em destaque)\n  const expAbusivaRegex = /\\b(?:experiencia\\s*(?:comprovada|solida|minima)?\\s*(?:de\\s*)?([3-9]|\\d{2,})\\s*(?:anos?|yrs?|years?)|([3-9]|\\d{2,})\\s*(?:anos?|yrs?|years?)\\s*(?:de\\s*)?(?:experiencia|atuacao|pratica|vivencia)|(?:minimo|ao\\s*menos|a\\s*partir)\\s*de\\s*([3-9]|\\d{2,})\\s*(?:anos?))\\b/i;\n  const nivelPlenoSenior = /\\b(?:nivel\\s*pleno|nivel\\s*senior|experiencia\\s*senior|tech\\s*lead|lideranca\\s*tecnica)\\b/i;\n\n  if (expAbusivaRegex.test(desc) || nivelPlenoSenior.test(desc)) {\n    job.alerta_experiencia = '[ALERTA: Exige experiencia avancada (3+ anos/pleno)]';\n    job.alerta_formatado = '[ALERTA: Exige experiencia avancada (3+ anos/pleno)]\\n';\n  } else {\n    job.alerta_experiencia = '';\n    job.alerta_formatado = '';\n  }\n\n  job.botao_texto = (job.tipo_fonte === 'POST') ? 'Ver Post no LinkedIn' : 'Acessar Vaga';\n\n  // 7. Roteamento Geografico e Categoria Profissional\n  const isFeira = /feira\\s*de\\s*santana|fsa/.test(city) ||\n                  /feira\\s*de\\s*santana|fsa/.test(location) ||\n                  /feira\\s*de\\s*santana/.test(desc);\n\n  const isRemote = job.job_is_remote === true || \n                   /remoto|home\\s*office/i.test(title) ||\n                   /100%\\s*remoto|trabalho\\s*remoto/i.test(desc);\n\n  if (isFeira) {\n    job.categoria = 'ti_fsa';\n    if (id) staticData.seenJobIds.push(id);\n    if (fp) staticData.seenFingerprints.push(fp);\n    resultado.push(item);\n    continue;\n  }\n\n  if (isRemote) {\n    const isDev = /desenvolvedor|developer|dev|frontend|backend|fullstack|software|web|programador|programacao|react|node|python|java|javascript|low\\s*code|c#|angular/i.test(title) ||\n                  /desenvolvedor|programador|programacao/i.test(desc);\n\n    if (isDev) {\n      job.categoria = 'dev_remoto';\n    } else {\n      job.categoria = 'ti_geral';\n    }\n    if (id) staticData.seenJobIds.push(id);\n    if (fp) staticData.seenFingerprints.push(fp);\n    resultado.push(item);\n  }\n}\n\nif (staticData.seenJobIds.length > 500) {\n  staticData.seenJobIds = staticData.seenJobIds.slice(-500);\n}\nif (staticData.seenFingerprints.length > 500) {\n  staticData.seenFingerprints = staticData.seenFingerprints.slice(-500);\n}\n\nreturn resultado;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1280,
-        350
+        1480,
+        500
       ],
       "id": "classifier-node",
       "name": "Classificador e Deduplicacao"
@@ -324,8 +486,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
-        1480,
-        350
+        1680,
+        500
       ],
       "id": "switch-classificacao",
       "name": "Switch Classificacao"
@@ -359,8 +521,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1720,
-        150
+        1920,
+        300
       ],
       "id": "telegram-ti-fsa",
       "name": "Telegram - TI Feira de Santana",
@@ -401,8 +563,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1720,
-        350
+        1920,
+        500
       ],
       "id": "telegram-dev-remoto",
       "name": "Telegram - Dev Remoto",
@@ -443,8 +605,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1720,
-        550
+        1920,
+        700
       ],
       "id": "telegram-ti-geral",
       "name": "Telegram - Outras Areas TI",
@@ -467,7 +629,22 @@
             "index": 0
           },
           {
+            "node": "Buscar Vagas Programacao",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Buscar Vagas Dados e IA",
+            "type": "main",
+            "index": 0
+          },
+          {
             "node": "Buscar Vagas Suporte Remoto",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Buscar Vagas TI Brasil",
             "type": "main",
             "index": 0
           },
@@ -488,7 +665,29 @@
       "main": [
         [
           {
-            "node": "Combinar Dev e Suporte",
+            "node": "Combinar Dev e Programacao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Vagas Programacao": {
+      "main": [
+        [
+          {
+            "node": "Combinar Dev e Programacao",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Buscar Vagas Dados e IA": {
+      "main": [
+        [
+          {
+            "node": "Combinar Dados e Suporte",
             "type": "main",
             "index": 0
           }
@@ -499,18 +698,18 @@
       "main": [
         [
           {
-            "node": "Combinar Dev e Suporte",
+            "node": "Combinar Dados e Suporte",
             "type": "main",
             "index": 1
           }
         ]
       ]
     },
-    "Combinar Dev e Suporte": {
+    "Buscar Vagas TI Brasil": {
       "main": [
         [
           {
-            "node": "Combinar Todas JSearch",
+            "node": "Combinar TI BR e TI FSA",
             "type": "main",
             "index": 0
           }
@@ -521,14 +720,58 @@
       "main": [
         [
           {
-            "node": "Combinar Todas JSearch",
+            "node": "Combinar TI BR e TI FSA",
             "type": "main",
             "index": 1
           }
         ]
       ]
     },
-    "Combinar Todas JSearch": {
+    "Combinar Dev e Programacao": {
+      "main": [
+        [
+          {
+            "node": "Combinar Subgrupo 1 e 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combinar Dados e Suporte": {
+      "main": [
+        [
+          {
+            "node": "Combinar Subgrupo 1 e 2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Combinar Subgrupo 1 e 2": {
+      "main": [
+        [
+          {
+            "node": "Combinar Todas as Buscas JSearch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combinar TI BR e TI FSA": {
+      "main": [
+        [
+          {
+            "node": "Combinar Todas as Buscas JSearch",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Combinar Todas as Buscas JSearch": {
       "main": [
         [
           {
