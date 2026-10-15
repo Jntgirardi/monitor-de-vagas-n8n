@@ -39,6 +39,7 @@ flowchart TD
 - Tag de identificacao de origem: distincao clara entre processos formais (`Tipo: VAGAS`) e publicacoes diretas no feed (`Tipo: POST`).
 - Deduplicacao dupla e semantica: memoria persistente por ID unico (`seenJobIds`) e por impressao digital cruzada (`seenFingerprints`), eliminando republicacoes identicas entre diferentes portais (Gupy, Catho, InfoJobs, LinkedIn).
 - Match Score de compatibilidade: classificacao automatica de aderencia (ALTA, MEDIA, GERAL) analisando a presenca da stack de interesse (Python, JavaScript, TypeScript, React, Node.js, SQL, Docker, Git).
+- Filtro Anti-Vagas Fantasmas: descarte automatico e previo de bancos de talentos, cadastros de reserva, empresas confidenciais, posts isca de engajamento no LinkedIn ('comente eu quero') e descricoes ocas/vazias sem requisitos tecnicos.
 - Filtro Anti-Falso Junior: deteccao automatica de requisitos abusivos de experiencia (3+ anos, nivel pleno/senior) em oportunidades de estagio ou junior, com emissao de alerta na notificacao.
 - Botoes interativos no Telegram: botoes nativos (Inline Keyboard) para abertura direta da vaga ou do post no LinkedIn com um clique, mantendo a mensagem limpa e ergonomica no celular.
 - Execucao automatica programada para 09:00 e 15:00 BRT.
