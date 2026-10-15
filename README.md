@@ -1,17 +1,17 @@
 # Monitor de Vagas n8n
 
-Sistema automatizado desenvolvido no n8n para monitoramento e classificacao de vagas de emprego em tempo real, com notificacoes via Telegram e organizacao por categorias profissionais.
+Sistema automatizado desenvolvido no n8n para monitoramento e classificacao de vagas de tecnologia da informacao em tempo real, com notificacoes via Telegram e organizacao por categorias profissionais.
 
 ## Arquitetura
 
 ```mermaid
 flowchart TD
-    Schedule["Schedule Trigger: 09:00 e 15:00"] --> FetchDev["Buscar Vagas Dev: RapidAPI JSearch"]
-    Schedule --> FetchAdmin["Buscar Vagas Admin: RapidAPI JSearch"]
+    Schedule["Schedule Trigger: 09:00 e 15:00"] --> FetchDev["Buscar Vagas Dev Remoto: RapidAPI JSearch"]
+    Schedule --> FetchTIFSA["Buscar Vagas TI FSA: RapidAPI JSearch"]
     Schedule --> FetchLI["Buscar Posts LinkedIn: Apify"]
     
     FetchDev --> MergeJS["Combinar Vagas JSearch: Merge"]
-    FetchAdmin --> MergeJS
+    FetchTIFSA --> MergeJS
     
     MergeJS --> SplitJS["Separar Vagas JSearch: Code"]
     FetchLI --> NormLI["Normalizar Posts LinkedIn: Code"]
@@ -25,15 +25,13 @@ flowchart TD
     Switch -->|TI Feira de Santana| TG1["Telegram: TI Feira de Santana"]
     Switch -->|Desenvolvedor Remoto| TG2["Telegram: Dev Remoto"]
     Switch -->|Outras Areas TI| TG3["Telegram: Outras Areas TI"]
-    Switch -->|Auxiliar Admin CLT FSA| TG4["Telegram: Admin CLT Feira de Santana"]
 ```
 
 ## Categorias e Regras de Negocio
 
 1. TI Feira de Santana: Vagas locais presenciais ou hibridas na area de tecnologia em Feira de Santana, Bahia.
-2. Desenvolvedor Remoto: Vagas de estagio em desenvolvimento de software em modalidade remota para todo o Brasil.
-3. Outras Areas TI: Vagas remotas em suporte, dados, qualidade e infraestrutura.
-4. Auxiliar Administrativo CLT: Vagas exclusivamente presenciais em Feira de Santana com contratacao formal CLT. Vagas remotas, MEI ou PJ sao descartadas automaticamente.
+2. Desenvolvedor Remoto: Vagas de estagio e posicoes junior em desenvolvimento de software em modalidade remota para todo o Brasil.
+3. Outras Areas TI: Vagas remotas em suporte, dados, qualidade (QA) e infraestrutura.
 
 ## Recursos Tecnicos
 
