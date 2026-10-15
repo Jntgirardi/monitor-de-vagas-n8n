@@ -143,7 +143,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Desempacota a lista data.jobs das buscas da RapidAPI JSearch\nconst vagas = [];\nfor (const item of $input.all()) {\n  const lista = item.json?.data?.jobs || item.json?.jobs || [];\n  for (const vaga of lista) {\n    vagas.push({ json: vaga });\n  }\n}\nreturn vagas;"
+        "jsCode": "// Desempacota a lista data.jobs das buscas da RapidAPI JSearch\nconst vagas = [];\nfor (const item of $input.all()) {\n  const lista = item.json?.data?.jobs || item.json?.jobs || [];\n  for (const vaga of lista) {\n    vaga.tipo_fonte = 'VAGAS';\n    vagas.push({ json: vaga });\n  }\n}\nreturn vagas;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -156,7 +156,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Normaliza os posts do feed do LinkedIn para a estrutura padrao de vagas\nconst resultados = [];\n\nfor (const item of $input.all()) {\n  const p = item.json;\n  if (!p || (!p.postId && !p.text)) continue;\n\n  const lines = (p.text || '').split('\\n').map(l => l.replace(/[\\\\`\\*\\_#]/g, ' ').trim()).filter(l => l.length > 0);\n  let titulo = lines[0] || 'Oportunidade em TI no LinkedIn';\n  if (titulo.length > 80) titulo = titulo.slice(0, 77) + '...';\n\n  const author = p.authorName ? p.authorName.replace(/[\\\\`\\*\\_]/g, ' ').trim() : 'Recrutador Tech (LinkedIn)';\n\n  resultados.push({\n    json: {\n      job_id: 'li_' + (p.postId || p.url),\n      job_title: titulo,\n      employer_name: author + ' (LinkedIn)',\n      job_apply_link: p.url || '',\n      job_description: p.text || '',\n      job_posted_at_datetime_utc: p.postedAtISO || p.scrapedAt || new Date().toISOString(),\n      job_is_remote: /remoto|home\\s*office|100%\\s*remoto/i.test(p.text || ''),\n      job_city: /feira\\s*de\\s*santana/i.test(p.text || '') ? 'Feira de Santana' : '',\n      job_state: /feira\\s*de\\s*santana/i.test(p.text || '') ? 'BA' : '',\n      job_location: /feira\\s*de\\s*santana/i.test(p.text || '') ? 'Feira de Santana, BA' : 'Brasil',\n      origem: 'Post no LinkedIn'\n    }\n  });\n}\n\nreturn resultados;"
+        "jsCode": "// Normaliza os posts do feed do LinkedIn para a estrutura padrao de vagas\nconst resultados = [];\n\nfor (const item of $input.all()) {\n  const p = item.json;\n  if (!p || (!p.postId && !p.text)) continue;\n\n  const lines = (p.text || '').split('\\n').map(l => l.replace(/[\\\\`\\*\\_#]/g, ' ').trim()).filter(l => l.length > 0);\n  let titulo = lines[0] || 'Oportunidade em TI no LinkedIn';\n  if (titulo.length > 80) titulo = titulo.slice(0, 77) + '...';\n\n  const author = p.authorName ? p.authorName.replace(/[\\\\`\\*\\_]/g, ' ').trim() : 'Recrutador Tech (LinkedIn)';\n\n  resultados.push({\n    json: {\n      job_id: 'li_' + (p.postId || p.url),\n      job_title: titulo,\n      employer_name: author + ' (LinkedIn)',\n      job_apply_link: p.url || '',\n      job_description: p.text || '',\n      job_posted_at_datetime_utc: p.postedAtISO || p.scrapedAt || new Date().toISOString(),\n      job_is_remote: /remoto|home\\s*office|100%\\s*remoto/i.test(p.text || ''),\n      job_city: /feira\\s*de\\s*santana/i.test(p.text || '') ? 'Feira de Santana' : '',\n      job_state: /feira\\s*de\\s*santana/i.test(p.text || '') ? 'BA' : '',\n      job_location: /feira\\s*de\\s*santana/i.test(p.text || '') ? 'Feira de Santana, BA' : 'Brasil',\n      tipo_fonte: 'POST',\n      origem: 'Post no LinkedIn'\n    }\n  });\n}\n\nreturn resultados;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -279,7 +279,7 @@
     {
       "parameters": {
         "chatId": "SEU_CHAT_ID_TELEGRAM",
-        "text": "=VAGA: TI - FEIRA DE SANTANA (PRESENCIAL)\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nData: {{ $json.data_formatada }} - {{ $json.status_data }}\nLocal: Feira de Santana - BA\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nElabore uma candidatura personalizada para esta vaga presencial de TI em Feira de Santana - BA:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLocal: Feira de Santana - BA\nLink: {{ $json.job_apply_link }}\n\nRequisitos da vaga:\n{{ ($json.job_description || 'Sem detalhes informados').replace(/[\\\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
+        "text": "=VAGA: TI - FEIRA DE SANTANA (PRESENCIAL)\nTipo: {{ $json.tipo_fonte || 'VAGAS' }}\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nData: {{ $json.data_formatada }} - {{ $json.status_data }}\nLocal: Feira de Santana - BA\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nElabore uma candidatura personalizada para esta vaga presencial de TI em Feira de Santana - BA:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLocal: Feira de Santana - BA\nLink: {{ $json.job_apply_link }}\n\nRequisitos da vaga:\n{{ ($json.job_description || 'Sem detalhes informados').replace(/[\\\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
         "additionalFields": {
           "parse_mode": "Markdown",
           "disable_web_page_preview": false
@@ -304,7 +304,7 @@
     {
       "parameters": {
         "chatId": "SEU_CHAT_ID_TELEGRAM",
-        "text": "=VAGA: DESENVOLVEDOR REMOTO\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nData: {{ $json.data_formatada }} - {{ $json.status_data }}\nModalidade: Remoto\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nAvalie esta vaga de desenvolvimento e elabore minha candidatura tecnica destacando meus projetos e stacks:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos:\n{{ ($json.job_description || 'Sem detalhes informados').replace(/[\\\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
+        "text": "=VAGA: DESENVOLVEDOR REMOTO\nTipo: {{ $json.tipo_fonte || 'VAGAS' }}\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nData: {{ $json.data_formatada }} - {{ $json.status_data }}\nModalidade: Remoto\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nAvalie esta vaga de desenvolvimento e elabore minha candidatura tecnica destacando meus projetos e stacks:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nRequisitos:\n{{ ($json.job_description || 'Sem detalhes informados').replace(/[\\\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
         "additionalFields": {
           "parse_mode": "Markdown",
           "disable_web_page_preview": false
@@ -329,7 +329,7 @@
     {
       "parameters": {
         "chatId": "SEU_CHAT_ID_TELEGRAM",
-        "text": "=VAGA: TI - OUTRAS AREAS (REMOTO)\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nData: {{ $json.data_formatada }} - {{ $json.status_data }}\nModalidade: Remoto\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nCrie uma apresentacao profissional para esta oportunidade remota na area de TI:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nDescricao:\n{{ ($json.job_description || 'Sem detalhes informados').replace(/[\\\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
+        "text": "=VAGA: TI - OUTRAS AREAS (REMOTO)\nTipo: {{ $json.tipo_fonte || 'VAGAS' }}\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nData: {{ $json.data_formatada }} - {{ $json.status_data }}\nModalidade: Remoto\nLink: {{ $json.job_apply_link }}\n\nPROMPT PARA COPIAR:\n```\nCrie uma apresentacao profissional para esta oportunidade remota na area de TI:\n\nCargo: {{ $json.job_title }}\nEmpresa: {{ $json.employer_name }}\nLink: {{ $json.job_apply_link }}\n\nDescricao:\n{{ ($json.job_description || 'Sem detalhes informados').replace(/[\\\\`\\*\\_]/g, ' ').replace(/\\s+/g, ' ').slice(0, 450).trim() }}\n```",
         "additionalFields": {
           "parse_mode": "Markdown",
           "disable_web_page_preview": false
