@@ -6,11 +6,14 @@ Sistema automatizado desenvolvido no n8n para monitoramento e classificacao de v
 
 ```mermaid
 flowchart TD
-    Schedule["Schedule Trigger: 09:00 e 15:00"] --> FetchDev["Buscar Vagas Dev Remoto: RapidAPI JSearch"]
-    Schedule --> FetchTIFSA["Buscar Vagas TI FSA: RapidAPI JSearch"]
+    Schedule["Schedule Trigger: 09:00 e 15:00"] --> FetchDev["Buscar Vagas Dev Remoto: JSearch"]
+    Schedule --> FetchSup["Buscar Vagas Suporte Remoto: JSearch"]
+    Schedule --> FetchTIFSA["Buscar Vagas TI FSA: JSearch"]
     Schedule --> FetchLI["Buscar Posts LinkedIn: Apify"]
     
-    FetchDev --> MergeJS["Combinar Vagas JSearch: Merge"]
+    FetchDev --> MergeDS["Combinar Dev e Suporte: Merge"]
+    FetchSup --> MergeDS
+    MergeDS --> MergeJS["Combinar Todas JSearch: Merge"]
     FetchTIFSA --> MergeJS
     
     MergeJS --> SplitJS["Separar Vagas JSearch: Code"]
